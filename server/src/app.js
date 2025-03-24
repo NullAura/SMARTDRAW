@@ -10,7 +10,7 @@ const app = express();
 
 // CORS 配置
 app.use(cors({
-  origin: 'http://localhost:5173', // 允许前端开发服务器访问
+  origin: ['http://localhost:5173', 'http://142.171.237.107:5173'], // 允许前端开发服务器和服务器 IP 访问
   credentials: true
 }));
 
@@ -38,6 +38,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 }); 
