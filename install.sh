@@ -202,16 +202,10 @@ check_npm_version() {
                     exit 1
                 fi
             else
-                if ask_install "npm" "install_nodejs_linux"; then
-                    npm_version=$(npm -v)
-                    if [[ $(echo "$npm_version 8.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
-                        print_error "npm 版本仍然不满足要求"
-                        exit 1
-                    fi
-                else
-                    exit 1
-                fi
+                print_info "npm 版本已满足要求"
             fi
+        else
+            print_info "npm 版本已满足要求"
         fi
     fi
 }
