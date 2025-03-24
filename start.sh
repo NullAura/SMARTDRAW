@@ -23,11 +23,38 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # 获取服务器 IP 地址
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
+# 创建日志目录
+LOG_DIR="$SCRIPT_DIR/logs"
+mkdir -p "$LOG_DIR"
+
+# 日志文件
+LOG_FILE="$LOG_DIR/app.log"
+PID_FILE="$LOG_DIR/app.pid"
+
+# 日志函数
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# 检查是否已经在运行
+if [ -f "$PID_FILE" ]; then
+    pid=$(cat "$PID_FILE")
+    if ps -p "$pid" > /dev/null; then
+        log "SmartDraw 已经在运行中 (PID: $pid)"
+        exit 1
+    else
+        rm -f "$PID_FILE"
+    fi
+fi
+
+# 保存当前进程 ID
+echo $$ > "$PID_FILE"
+
 # 打印启动信息
-echo -e "${BLUE}正在启动 SmartDraw 项目...${NC}"
+log "正在启动 SmartDraw 项目..."
 
 # 启动 MongoDB
-echo -e "${BLUE}正在启动 MongoDB...${NC}"
+log "正在启动 MongoDB..."
 if [ "$OS_TYPE" = "macos" ]; then
     if ! brew services list | grep -q "mongodb-community.*started"; then
         $START_MONGODB
@@ -39,33 +66,32 @@ else
 fi
 
 # 启动后端服务器
-echo -e "${BLUE}正在启动后端服务器...${NC}"
-cd "$SCRIPT_DIR/server" && npm run dev &
+log "正在启动后端服务器..."
+cd "$SCRIPT_DIR/server" && nohup npm run dev >> "$LOG_FILE" 2>&1 &
 BACKEND_PID=$!
 
 # 等待后端服务器启动
 sleep 2
 
 # 启动前端服务器
-echo -e "${BLUE}正在启动前端服务器...${NC}"
-cd "$SCRIPT_DIR" && npm run dev -- --host &
+log "正在启动前端服务器..."
+cd "$SCRIPT_DIR" && nohup npm run dev -- --host >> "$LOG_FILE" 2>&1 &
 FRONTEND_PID=$!
 
 # 等待前端服务器启动
 sleep 2
 
 # 打印成功信息
-echo -e "${GREEN}SmartDraw 项目已启动！${NC}"
-echo -e "${BLUE}前端地址: http://$SERVER_IP:5173${NC}"
-echo -e "${BLUE}后端地址: http://$SERVER_IP:3000${NC}"
-
-# 等待用户输入
-echo -e "\n${BLUE}按 Ctrl+C 停止所有服务${NC}"
+log "SmartDraw 项目已启动！"
+log "前端地址: http://$SERVER_IP:5173"
+log "后端地址: http://$SERVER_IP:3000"
+log "查看日志: tail -f $LOG_FILE"
 
 # 等待用户中断
-trap "echo -e '\n${BLUE}正在停止服务...${NC}'; $STOP_MONGODB; kill $BACKEND_PID $FRONTEND_PID; exit" INT
+trap "log '正在停止服务...'; $STOP_MONGODB; kill $BACKEND_PID $FRONTEND_PID; rm -f '$PID_FILE'; exit" INT
 wait
 
 # 清理进程
 kill $BACKEND_PID $FRONTEND_PID
-echo -e "\n${GREEN}所有服务已停止${NC}" 
+rm -f "$PID_FILE"
+log "所有服务已停止" 
