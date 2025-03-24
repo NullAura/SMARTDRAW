@@ -65,6 +65,49 @@ check_mongodb() {
     fi
 }
 
+# 检查前端依赖
+check_frontend_deps() {
+    print_info "检查前端依赖..."
+    local required_deps=(
+        "vue"
+        "vue-router"
+        "element-plus"
+        "@element-plus/icons-vue"
+        "axios"
+        "pinia"
+        "sass"
+    )
+    
+    for dep in "${required_deps[@]}"; do
+        if ! grep -q "\"$dep\"" package.json; then
+            print_error "缺少前端依赖: $dep"
+            print_info "请确保 package.json 中包含所有必要的依赖"
+            exit 1
+        fi
+    done
+}
+
+# 检查后端依赖
+check_backend_deps() {
+    print_info "检查后端依赖..."
+    local required_deps=(
+        "express"
+        "mongoose"
+        "bcryptjs"
+        "jsonwebtoken"
+        "cors"
+        "dotenv"
+    )
+    
+    for dep in "${required_deps[@]}"; do
+        if ! grep -q "\"$dep\"" server/package.json; then
+            print_error "缺少后端依赖: $dep"
+            print_info "请确保 server/package.json 中包含所有必要的依赖"
+            exit 1
+        fi
+    done
+}
+
 # 安装前端依赖
 install_frontend() {
     print_info "正在安装前端依赖..."
@@ -129,6 +172,10 @@ main() {
     check_node_version
     check_npm_version
     check_mongodb
+
+    # 检查依赖
+    check_frontend_deps
+    check_backend_deps
 
     # 安装依赖
     install_frontend

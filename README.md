@@ -99,7 +99,17 @@ npm install
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
     "element-plus": "^2.3.9",
-    "axios": "^1.4.0"
+    "@element-plus/icons-vue": "^2.1.0",
+    "axios": "^1.4.0",
+    "pinia": "^2.1.6",
+    "sass": "^1.66.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.3.4",
+    "vite": "^4.4.9",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "^3.0.3"
   }
 }
 ```
