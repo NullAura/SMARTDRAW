@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import Home from '@/views/Home.vue'
 import Login from '@/views/Login.vue'
+import Register from '@/views/Register.vue'
 import User from '@/views/User.vue'
 import Store from '@/views/Store.vue'
 import Community from '@/views/Community.vue'
@@ -15,6 +16,10 @@ const routes = [
   { 
     path: '/login', 
     component: Login 
+  },
+  { 
+    path: '/register', 
+    component: Register 
   },
   {
     path: '/',
