@@ -21,7 +21,11 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # 获取服务器 IP 地址
-SERVER_IP=$(hostname -I | awk '{print $1}')
+if [ "$OS_TYPE" = "macos" ]; then
+    SERVER_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
+else
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+fi
 
 # 创建日志目录
 LOG_DIR="$SCRIPT_DIR/logs"
@@ -65,9 +69,12 @@ else
     fi
 fi
 
+# 设置环境变量
+export SERVER_IP
+
 # 启动后端服务器
 log "正在启动后端服务器..."
-cd "$SCRIPT_DIR/server" && nohup npm run dev >> "$LOG_FILE" 2>&1 &
+cd "$SCRIPT_DIR/server" && npm run dev 2>&1 | tee -a "$LOG_FILE" &
 BACKEND_PID=$!
 
 # 等待后端服务器启动
@@ -75,7 +82,7 @@ sleep 2
 
 # 启动前端服务器
 log "正在启动前端服务器..."
-cd "$SCRIPT_DIR" && nohup npm run dev -- --host >> "$LOG_FILE" 2>&1 &
+cd "$SCRIPT_DIR" && npm run dev -- --host 2>&1 | tee -a "$LOG_FILE" &
 FRONTEND_PID=$!
 
 # 等待前端服务器启动

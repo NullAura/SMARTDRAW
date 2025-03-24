@@ -63,6 +63,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
+import { API_BASE_URL } from '@/config'
 
 export default {
   name: 'Login',
@@ -89,13 +90,11 @@ export default {
       
       let isValid = true
       
-      // 账号验证
       if (!this.formData.account) {
         this.errors.account = '请输入邮箱或用户名'
         isValid = false
       }
       
-      // 密码验证
       if (!this.formData.password) {
         this.errors.password = '请输入密码'
         isValid = false
@@ -113,7 +112,8 @@ export default {
       this.loading = true
       try {
         console.log('开始登录请求...')
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        console.log('API地址:', API_BASE_URL)
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -129,20 +129,15 @@ export default {
         console.log('响应数据:', data)
 
         if (data.success) {
-          // 存储用户信息和token
           localStorage.setItem('token', data.data.token)
           localStorage.setItem('user', JSON.stringify(data.data.user))
           localStorage.setItem('isLoggedIn', 'true')
           
-          // 如果选择了记住我，可以存储更多信息
           if (this.formData.remember) {
             localStorage.setItem('rememberedAccount', this.formData.account)
           }
           
-          // 登录成功提示
           ElMessage.success(data.message)
-          
-          // 跳转到首页
           this.$router.push('/home')
         } else {
           ElMessage.error(data.message || '登录失败')

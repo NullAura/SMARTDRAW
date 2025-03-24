@@ -10,7 +10,7 @@ const app = express();
 
 // CORS 配置
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://142.171.237.107:5173'], // 允许前端开发服务器和服务器 IP 访问
+  origin: true, // 允许所有来源
   credentials: true
 }));
 
