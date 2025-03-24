@@ -6,16 +6,16 @@
       <form @submit.prevent="handleSubmit">
         <div class="input-group">
           <div class="input-icon">
-            <i class="fas fa-envelope"></i>
+            <i class="fas fa-user"></i>
           </div>
           <input
-              type="email"
-              v-model="formData.email"
-              placeholder="请输入邮箱"
+              type="text"
+              v-model="formData.account"
+              placeholder="请输入邮箱或用户名"
               required
-              :class="{ 'error': errors.email }"
+              :class="{ 'error': errors.account }"
           >
-          <div class="error-message" v-if="errors.email">{{ errors.email }}</div>
+          <div class="error-message" v-if="errors.account">{{ errors.account }}</div>
         </div>
 
         <div class="input-group">
@@ -62,17 +62,19 @@
 </template>
 
 <script>
+import { ElMessage } from 'element-plus'
+
 export default {
   name: 'Login',
   data() {
     return {
       formData: {
-        email: '',
+        account: '',
         password: '',
         remember: false
       },
       errors: {
-        email: '',
+        account: '',
         password: ''
       },
       loading: false
@@ -81,18 +83,15 @@ export default {
   methods: {
     validateForm() {
       this.errors = {
-        email: '',
+        account: '',
         password: ''
       }
       
       let isValid = true
       
-      // 邮箱验证
-      if (!this.formData.email) {
-        this.errors.email = '请输入邮箱'
-        isValid = false
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
-        this.errors.email = '请输入有效的邮箱地址'
+      // 账号验证
+      if (!this.formData.account) {
+        this.errors.account = '请输入邮箱或用户名'
         isValid = false
       }
       
@@ -113,58 +112,51 @@ export default {
       
       this.loading = true
       try {
-        // 这里替换为实际的API调用
-        const response = await this.login(this.formData)
-        
-        if (response.success) {
+        console.log('开始登录请求...')
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            account: this.formData.account,
+            password: this.formData.password
+          })
+        })
+
+        console.log('收到响应:', response.status)
+        const data = await response.json()
+        console.log('响应数据:', data)
+
+        if (data.success) {
           // 存储用户信息和token
-          localStorage.setItem('token', response.token)
-          localStorage.setItem('user', JSON.stringify(response.user))
+          localStorage.setItem('token', data.data.token)
+          localStorage.setItem('user', JSON.stringify(data.data.user))
+          localStorage.setItem('isLoggedIn', 'true')
           
           // 如果选择了记住我，可以存储更多信息
           if (this.formData.remember) {
-            localStorage.setItem('rememberedEmail', this.formData.email)
+            localStorage.setItem('rememberedAccount', this.formData.account)
           }
           
           // 登录成功提示
-          this.$message.success('登录成功')
+          ElMessage.success(data.message)
           
           // 跳转到首页
           this.$router.push('/home')
         } else {
-          this.$message.error(response.message || '登录失败')
+          ElMessage.error(data.message || '登录失败')
         }
       } catch (error) {
-        this.$message.error('登录失败，请稍后重试')
-        console.error('Login error:', error)
+        console.error('登录错误详情:', error)
+        if (error.message.includes('Failed to fetch')) {
+          ElMessage.error('无法连接到服务器，请检查服务器是否运行')
+        } else {
+          ElMessage.error('登录失败：' + error.message)
+        }
       } finally {
         this.loading = false
       }
-    },
-    
-    // 模拟登录API调用
-    login(credentials) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // 这里模拟API响应
-          if (credentials.email === 'test@example.com' && credentials.password === '123456') {
-            resolve({
-              success: true,
-              token: 'mock-token',
-              user: {
-                id: 1,
-                email: credentials.email,
-                name: 'Test User'
-              }
-            })
-          } else {
-            resolve({
-              success: false,
-              message: '邮箱或密码错误'
-            })
-          }
-        }, 1000)
-      })
     },
     
     handleForgotPassword() {
@@ -188,10 +180,10 @@ export default {
     }
   },
   created() {
-    // 检查是否有记住的邮箱
-    const rememberedEmail = localStorage.getItem('rememberedEmail')
-    if (rememberedEmail) {
-      this.formData.email = rememberedEmail
+    // 检查是否有记住的账号
+    const rememberedAccount = localStorage.getItem('rememberedAccount')
+    if (rememberedAccount) {
+      this.formData.account = rememberedAccount
       this.formData.remember = true
     }
   }

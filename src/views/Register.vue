@@ -73,6 +73,8 @@
 </template>
 
 <script>
+import { ElMessage } from 'element-plus'
+
 export default {
   name: 'Register',
   data() {
@@ -147,37 +149,39 @@ export default {
       
       this.loading = true
       try {
-        // 这里替换为实际的API调用
-        const response = await this.register(this.formData)
-        
-        if (response.success) {
-          // 注册成功提示
-          this.$message.success('注册成功')
-          
-          // 跳转到登录页
+        console.log('开始注册请求...')
+        const response = await fetch('http://localhost:3000/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: this.formData.username,
+            email: this.formData.email,
+            password: this.formData.password
+          })
+        })
+
+        console.log('收到响应:', response.status)
+        const data = await response.json()
+        console.log('响应数据:', data)
+
+        if (data.success) {
+          ElMessage.success(data.message)
           this.$router.push('/login')
         } else {
-          this.$message.error(response.message || '注册失败')
+          ElMessage.error(data.message || '注册失败')
         }
       } catch (error) {
-        this.$message.error('注册失败，请稍后重试')
-        console.error('Register error:', error)
+        console.error('注册错误详情:', error)
+        if (error.message.includes('Failed to fetch')) {
+          ElMessage.error('无法连接到服务器，请检查服务器是否运行')
+        } else {
+          ElMessage.error('注册失败：' + error.message)
+        }
       } finally {
         this.loading = false
       }
-    },
-    
-    // 模拟注册API调用
-    register(userData) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // 这里模拟API响应
-          resolve({
-            success: true,
-            message: '注册成功'
-          })
-        }, 1000)
-      })
     }
   }
 }
