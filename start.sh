@@ -17,6 +17,9 @@ else
     STOP_MONGODB="sudo systemctl stop mongod"
 fi
 
+# 获取脚本所在目录的绝对路径
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # 打印启动信息
 echo -e "${BLUE}正在启动 SmartDraw 项目...${NC}"
 
@@ -34,16 +37,15 @@ fi
 
 # 启动后端服务器
 echo -e "${BLUE}正在启动后端服务器...${NC}"
-cd server && npm run dev &
+cd "$SCRIPT_DIR/server" && npm run dev &
 BACKEND_PID=$!
-cd ..
 
 # 等待后端服务器启动
 sleep 2
 
 # 启动前端服务器
 echo -e "${BLUE}正在启动前端服务器...${NC}"
-npm run dev &
+cd "$SCRIPT_DIR" && npm run dev &
 FRONTEND_PID=$!
 
 # 等待前端服务器启动
@@ -58,7 +60,7 @@ echo -e "${BLUE}后端地址: http://localhost:3000${NC}"
 echo -e "\n${BLUE}按 Ctrl+C 停止所有服务${NC}"
 
 # 等待用户中断
-trap "echo -e '\n${BLUE}正在停止服务...${NC}'; $STOP_MONGODB; exit" INT
+trap "echo -e '\n${BLUE}正在停止服务...${NC}'; $STOP_MONGODB; kill $BACKEND_PID $FRONTEND_PID; exit" INT
 wait
 
 # 清理进程
