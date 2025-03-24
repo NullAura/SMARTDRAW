@@ -20,6 +20,9 @@ fi
 # 获取脚本所在目录的绝对路径
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# 获取服务器 IP 地址
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
 # 打印启动信息
 echo -e "${BLUE}正在启动 SmartDraw 项目...${NC}"
 
@@ -45,7 +48,7 @@ sleep 2
 
 # 启动前端服务器
 echo -e "${BLUE}正在启动前端服务器...${NC}"
-cd "$SCRIPT_DIR" && npm run dev &
+cd "$SCRIPT_DIR" && npm run dev -- --host &
 FRONTEND_PID=$!
 
 # 等待前端服务器启动
@@ -53,8 +56,8 @@ sleep 2
 
 # 打印成功信息
 echo -e "${GREEN}SmartDraw 项目已启动！${NC}"
-echo -e "${BLUE}前端地址: http://localhost:5173${NC}"
-echo -e "${BLUE}后端地址: http://localhost:3000${NC}"
+echo -e "${BLUE}前端地址: http://$SERVER_IP:5173${NC}"
+echo -e "${BLUE}后端地址: http://$SERVER_IP:3000${NC}"
 
 # 等待用户输入
 echo -e "\n${BLUE}按 Ctrl+C 停止所有服务${NC}"
