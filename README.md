@@ -61,7 +61,7 @@ smartdraw/
 
 ## 环境要求
 
-- Node.js >= 16.0.0
+- Node.js >= 20.0.0 (LTS)
 - MongoDB >= 6.0
 - npm >= 8.0.0
 

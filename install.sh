@@ -75,11 +75,11 @@ ask_install() {
 install_nodejs_linux() {
     if [ "$PACKAGE_MANAGER" = "apt" ]; then
         # 添加 NodeSource 仓库
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         $INSTALL_CMD nodejs
     elif [ "$PACKAGE_MANAGER" = "yum" ]; then
         # 添加 NodeSource 仓库
-        curl -fsSL https://rpm.nodesource.com/setup_16.x | sudo bash -
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
         $INSTALL_CMD nodejs
     fi
 }
@@ -115,8 +115,8 @@ check_node_version() {
         if [ "$OS_TYPE" = "macos" ]; then
             if ask_install "Node.js" "$INSTALL_CMD node"; then
                 node_version=$(node -v | cut -d'v' -f2)
-                if [[ $(echo "$node_version 16.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
-                    print_error "Node.js 版本需要 >= 16.0.0，当前版本: $node_version"
+                if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
                     exit 1
                 fi
             else
@@ -125,8 +125,8 @@ check_node_version() {
         else
             if ask_install "Node.js" "install_nodejs_linux"; then
                 node_version=$(node -v | cut -d'v' -f2)
-                if [[ $(echo "$node_version 16.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
-                    print_error "Node.js 版本需要 >= 16.0.0，当前版本: $node_version"
+                if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
                     exit 1
                 fi
             else
@@ -135,12 +135,12 @@ check_node_version() {
         fi
     else
         node_version=$(node -v | cut -d'v' -f2)
-        if [[ $(echo "$node_version 16.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
-            print_error "Node.js 版本需要 >= 16.0.0，当前版本: $node_version"
+        if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+            print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
             if [ "$OS_TYPE" = "macos" ]; then
                 if ask_install "Node.js" "$UPGRADE_CMD node"; then
                     node_version=$(node -v | cut -d'v' -f2)
-                    if [[ $(echo "$node_version 16.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
                         print_error "Node.js 版本仍然不满足要求"
                         exit 1
                     fi
@@ -150,7 +150,7 @@ check_node_version() {
             else
                 if ask_install "Node.js" "install_nodejs_linux"; then
                     node_version=$(node -v | cut -d'v' -f2)
-                    if [[ $(echo "$node_version 16.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
                         print_error "Node.js 版本仍然不满足要求"
                         exit 1
                     fi
