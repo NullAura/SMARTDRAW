@@ -275,9 +275,12 @@ export default {
 
 .category-grid, .collections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   margin-top: 24px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .category-item, .collection-item {
@@ -285,18 +288,29 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.3s ease;
+  background: #f9f9f9;
+  padding: 12px;
+}
+
+.category-item:hover, .collection-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .category-item img, .collection-item img {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
 }
 
 .category-item h3, .collection-item h3 {
-  margin: 8px 0;
-  font-size: 16px;
+  margin: 12px 0 4px;
+  font-size: 14px;
   font-weight: normal;
+  text-align: center;
 }
 
 .section-header {
