@@ -4,23 +4,20 @@
     <!-- 左侧导航栏 -->
     <nav class="side-nav">
       <div class="nav-section">
-        <div class="nav-item highlight">热门</div>
-        <div class="nav-item">主题合集</div>
-        <div class="nav-item">储物和收纳</div>
-        <div class="nav-item">沙发和扶手椅</div>
-        <div class="nav-item">床和床垫</div>
-        <div class="nav-item">纺织品</div>
-        <div class="nav-item">餐桌和餐椅</div>
-        <div class="nav-item">餐具和厨具</div>
-        <div class="nav-item">清洁及晾晒用品</div>
-        <div class="nav-item">书桌和书桌椅</div>
-        <div class="nav-item">浴室家具和收纳</div>
-        <div class="nav-item">户外产品</div>
+        <div 
+          v-for="(section, index) in sections" 
+          :key="index"
+          class="nav-item"
+          :class="{ highlight: activeSection === section.id }"
+          @click="scrollToSection(section.id)"
+        >
+          {{ section.title }}
+        </div>
       </div>
     </nav>
 
     <!-- 主要内容区域 -->
-    <div class="main-content">
+    <div class="main-content" ref="mainContent" @scroll="handleScroll">
       <!-- 顶部导航栏 -->
       <nav class="top-nav">
         <div class="nav-items">
@@ -35,7 +32,7 @@
       </nav>
 
       <!-- 热门分类 -->
-      <section class="hot-categories">
+      <section id="hot" class="hot-categories" ref="hot">
         <h2>热门</h2>
         <div class="category-grid">
           <div class="category-item">
@@ -54,7 +51,7 @@
       </section>
 
       <!-- 主题合集 -->
-      <section class="collections">
+      <section id="collections" class="collections" ref="collections">
         <div class="section-header">
           <h2>主题合集</h2>
           <a href="#" class="view-all">全部</a>
@@ -78,13 +75,110 @@
           </div>
         </div>
       </section>
+
+      <!-- 储物和收纳 -->
+      <section id="storage" class="category-section" ref="storage">
+        <h2>储物和收纳</h2>
+        <div class="category-grid">
+          <!-- 示例内容 -->
+        </div>
+      </section>
+
+      <!-- 其他分类区域 -->
+      <section id="sofa" class="category-section" ref="sofa">
+        <h2>沙发和扶手椅</h2>
+      </section>
+
+      <section id="bed" class="category-section" ref="bed">
+        <h2>床和床垫</h2>
+      </section>
+
+      <section id="textile" class="category-section" ref="textile">
+        <h2>纺织品</h2>
+      </section>
+
+      <section id="dining" class="category-section" ref="dining">
+        <h2>餐桌和餐椅</h2>
+      </section>
+
+      <section id="kitchenware" class="category-section" ref="kitchenware">
+        <h2>餐具和厨具</h2>
+      </section>
+
+      <section id="cleaning" class="category-section" ref="cleaning">
+        <h2>清洁及晾晒用品</h2>
+      </section>
+
+      <section id="desk" class="category-section" ref="desk">
+        <h2>书桌和书桌椅</h2>
+      </section>
+
+      <section id="bathroom" class="category-section" ref="bathroom">
+        <h2>浴室家具和收纳</h2>
+      </section>
+
+      <section id="outdoor" class="category-section" ref="outdoor">
+        <h2>户外产品</h2>
+      </section>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'Store'
+  name: 'Store',
+  data() {
+    return {
+      activeSection: 'hot',
+      sections: [
+        { id: 'hot', title: '热门' },
+        { id: 'collections', title: '主题合集' },
+        { id: 'storage', title: '储物和收纳' },
+        { id: 'sofa', title: '沙发和扶手椅' },
+        { id: 'bed', title: '床和床垫' },
+        { id: 'textile', title: '纺织品' },
+        { id: 'dining', title: '餐桌和餐椅' },
+        { id: 'kitchenware', title: '餐具和厨具' },
+        { id: 'cleaning', title: '清洁及晾晒用品' },
+        { id: 'desk', title: '书桌和书桌椅' },
+        { id: 'bathroom', title: '浴室家具和收纳' },
+        { id: 'outdoor', title: '户外产品' }
+      ]
+    }
+  },
+  methods: {
+    handleScroll() {
+      const mainContent = this.$refs.mainContent;
+      const scrollTop = mainContent.scrollTop;
+      
+      // 获取所有区域的位置信息
+      this.sections.forEach(section => {
+        const element = this.$refs[section.id];
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const offsetTop = rect.top - mainContent.getBoundingClientRect().top;
+          
+          // 当区域距离顶部小于100px时，将其设置为活动区域
+          if (offsetTop <= 100 && offsetTop + rect.height > 100) {
+            this.activeSection = section.id;
+          }
+        }
+      });
+    },
+    scrollToSection(sectionId) {
+      const element = this.$refs[sectionId];
+      if (element) {
+        this.$refs.mainContent.scrollTo({
+          top: element.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      }
+    }
+  },
+  mounted() {
+    // 初始化时检查一次滚动位置
+    this.handleScroll();
+  }
 }
 </script>
 
@@ -102,6 +196,10 @@ export default {
   background: #fff;
   border-right: 1px solid #eee;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .nav-section {
@@ -114,12 +212,11 @@ export default {
   padding: 6px 4px;
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
   font-size: 12px;
   text-align: center;
   word-break: break-word;
   line-height: 1.2;
-  margin-bottom: 4px;
 }
 
 .side-nav .nav-item:hover {
@@ -128,19 +225,31 @@ export default {
 
 .side-nav .nav-item.highlight {
   font-weight: bold;
+  background-color: #f5f5f5;
+  color: #0058a3;
+  transform: scale(1.05);
 }
 
 .main-content {
   flex: 1;
   padding: 0 24px;
+  height: 100vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* 为固定导航栏预留空间 */
 }
 
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px 24px;
   border-bottom: 1px solid #eee;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin: 0 -24px;
 }
 
 .nav-items {
@@ -206,5 +315,15 @@ h2 {
   font-size: 24px;
   font-weight: bold;
   margin: 32px 0 16px;
+}
+
+.category-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #eee;
+  min-height: 300px;
+}
+
+.category-section:first-of-type {
+  padding-top: 0;
 }
 </style>
