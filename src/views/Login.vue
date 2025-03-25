@@ -113,11 +113,6 @@ export default {
       try {
         console.log('开始登录请求...')
         console.log('API地址:', API_BASE_URL)
-        console.log('请求参数:', {
-          account: this.formData.account,
-          password: this.formData.password
-        })
-        
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
@@ -130,8 +125,6 @@ export default {
         })
 
         console.log('收到响应:', response.status)
-        console.log('响应头:', Object.fromEntries(response.headers.entries()))
-        
         const data = await response.json()
         console.log('响应数据:', data)
 
@@ -147,18 +140,11 @@ export default {
           ElMessage.success(data.message)
           this.$router.push('/home')
         } else {
-          console.error('登录失败:', data.message)
           ElMessage.error(data.message || '登录失败')
         }
       } catch (error) {
         console.error('登录错误详情:', error)
-        console.error('错误堆栈:', error.stack)
         if (error.message.includes('Failed to fetch')) {
-          console.error('网络请求失败，可能的原因：')
-          console.error('1. 服务器未启动')
-          console.error('2. 网络连接问题')
-          console.error('3. CORS 配置问题')
-          console.error('4. 防火墙阻止')
           ElMessage.error('无法连接到服务器，请检查服务器是否运行')
         } else {
           ElMessage.error('登录失败：' + error.message)
