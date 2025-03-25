@@ -5,7 +5,7 @@
     <div class="user-header">
       <div class="user-info">
         <div class="avatar">
-          <img src="https://via.placeholder.com/80" alt="用户头像">
+          <img :src="defaultAvatar" alt="用户头像">
         </div>
         <div class="user-name">简拼用户 05428</div>
         <div class="edit-profile" @click="editProfile">
@@ -78,6 +78,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import defaultAvatar from '@/assets/head.jpg'
 
 const activeTab = ref('works')
 
