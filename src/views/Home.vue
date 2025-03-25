@@ -20,10 +20,9 @@
     </div>
 
     <div class="main-content">
-      <!-- 顶部导航 -->
-      <div class="top-nav">
+      <!-- 左上角菜单按钮 -->
+      <div class="menu-button">
         <i class="fas fa-bars" @click="toggleSidebar"></i>
-        <h1>智绘家居</h1>
       </div>
 
       <!-- 功能切换栏 -->
@@ -307,6 +306,98 @@ onMounted(() => {
 
 <style scoped>
 /* 原有样式保持不变，添加以下优化样式 */
+.home-container {
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100vw;
+}
+
+.main-content {
+  padding: 0.5rem;
+  width: 100%;
+  max-width: 100vw;
+}
+
+.function-bar {
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.function-item {
+  font-size: 0.9rem;
+  padding: 0.5rem;
+}
+
+.combined-upload {
+  height: 200px;
+  gap: 0.5rem;
+}
+
+.simple-upload {
+  height: 200px;
+}
+
+.download-box {
+  width: 100%;
+  height: 200px;
+  margin: 0.5rem 0;
+}
+
+.prompt-section {
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+textarea {
+  font-size: 0.9rem;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.generate-btn {
+  padding: 0.8rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding-bottom: 50px;
+  }
+  
+  .main-content {
+    padding: 0.5rem;
+  }
+
+  .function-item {
+    font-size: 0.85rem;
+  }
+
+  .upload-box {
+    height: 180px;
+  }
+
+  .download-box {
+    height: 180px;
+  }
+
+  .prompt-section {
+    padding: 0.5rem;
+  }
+
+  textarea {
+    font-size: 0.85rem;
+    padding: 0.6rem;
+  }
+
+  .generate-btn {
+    padding: 0.7rem;
+    font-size: 0.85rem;
+  }
+}
+
 .upload-box {
   position: relative;
   transition: transform 0.2s;
@@ -626,28 +717,40 @@ textarea {
 .content-area {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  min-height: 60vh;
+  gap: 0.8rem;
+  min-height: 50vh;
 }
 
 .input-section {
   flex: 1;
   position: relative;
   width: 100%;
-  margin: 1px;
+  margin: 0;
 }
 
-.combined-upload{
+.combined-upload {
   display: flex;
-  gap: 1rem;
-  height: 300px;
+  gap: 0.5rem;
+  height: 140px;
   width: 100%;
 }
 
 .simple-upload {
-  height: 300px;
+  height: 140px;
   display: flex;
   justify-content: center;
+}
+
+.download-box {
+  width: 100%;
+  height: 140px;
+  margin: 0.3rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .upload-box {
@@ -659,11 +762,7 @@ textarea {
   overflow: hidden;
   position: relative;
   width: 100%;
-}
-
-.upload-box:hover {
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  height: 100%;
 }
 
 .upload-placeholder {
@@ -735,16 +834,15 @@ textarea {
 
 @media (max-width: 768px) {
   .combined-upload {
-    height: 200px;
-    gap: 0.5rem;
+    height: 120px;
   }
 
   .simple-upload {
-    height: 200px;
+    height: 120px;
   }
 
-  .output-preview {
-    height: 180px;
+  .download-box {
+    height: 120px;
   }
 }
 
@@ -755,5 +853,45 @@ input[type="file"] {
 
 img {
   content-visibility: auto;
+}
+
+.menu-button {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.menu-button i {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+}
+
+.menu-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+  .menu-button {
+    top: 8px;
+    left: 8px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .menu-button i {
+    font-size: 1.1rem;
+  }
 }
 </style>

@@ -38,11 +38,16 @@ export default {
   display: flex;
   flex-direction: column;
   background-color: #f5f7fb;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .main-content {
   flex: 1;
   padding-bottom: 60px; /* 为底部导航留出空间 */
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .bottom-nav {
@@ -50,13 +55,15 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 50px;
   background: #ffffff;
   display: flex;
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 100;
+  width: 100%;
+  max-width: 100vw;
 }
 
 .nav-item {
@@ -65,14 +72,15 @@ export default {
   align-items: center;
   text-decoration: none;
   color: #909399;
-  font-size: 12px;
-  padding: 8px 0;
+  font-size: 11px;
+  padding: 4px 0;
   transition: all 0.3s;
+  width: 25%;
 }
 
 .nav-item i {
-  font-size: 20px;
-  margin-bottom: 4px;
+  font-size: 18px;
+  margin-bottom: 2px;
 }
 
 .nav-item.router-link-active {
