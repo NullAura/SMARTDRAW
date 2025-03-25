@@ -150,10 +150,24 @@ export default {
       this.loading = true
       try {
         console.log('开始注册请求...')
-        const response = await fetch('http://localhost:3000/api/auth/register', {
+        console.log('环境信息:', {
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          port: window.location.port,
+          fullUrl: window.location.href,
+          API_BASE_URL
+        })
+        console.log('请求参数:', {
+          username: this.formData.username,
+          email: this.formData.email,
+          password: '******' // 不输出实际密码
+        })
+        
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           body: JSON.stringify({
             username: this.formData.username,
@@ -162,20 +176,61 @@ export default {
           })
         })
 
-        console.log('收到响应:', response.status)
+        console.log('收到响应:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          ok: response.ok,
+          type: response.type,
+          url: response.url
+        })
+
         const data = await response.json()
         console.log('响应数据:', data)
 
         if (data.success) {
+          console.log('注册成功:', {
+            username: data.data?.user?.username,
+            email: data.data?.user?.email,
+            id: data.data?.user?.id
+          })
           ElMessage.success(data.message)
           this.$router.push('/login')
         } else {
+          console.error('注册失败:', {
+            message: data.message,
+            success: data.success,
+            data: data.data
+          })
           ElMessage.error(data.message || '注册失败')
         }
       } catch (error) {
-        console.error('注册错误详情:', error)
+        console.error('注册错误详情:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        })
+        
         if (error.message.includes('Failed to fetch')) {
-          ElMessage.error('无法连接到服务器，请检查服务器是否运行')
+          console.error('网络请求失败，可能的原因：')
+          console.error('1. 服务器未启动')
+          console.error('2. 网络连接问题')
+          console.error('3. CORS 配置问题')
+          console.error('4. 防火墙阻止')
+          console.error('5. 服务器地址配置错误')
+          console.error('6. DNS 解析问题')
+          console.error('当前网络环境:', {
+            online: navigator.onLine,
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            connection: navigator.connection ? {
+              type: navigator.connection.effectiveType,
+              downlink: navigator.connection.downlink,
+              rtt: navigator.connection.rtt
+            } : 'Not available'
+          })
+          ElMessage.error('无法连接到服务器，请检查网络连接')
         } else {
           ElMessage.error('注册失败：' + error.message)
         }

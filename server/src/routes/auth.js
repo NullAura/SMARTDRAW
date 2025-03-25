@@ -6,15 +6,39 @@ const { auth } = require('../middleware/auth');
 
 // 注册
 router.post('/register', async (req, res) => {
-  console.log('收到注册请求:', req.body); // 添加请求日志
+  console.log('收到注册请求:', {
+    body: {
+      ...req.body,
+      password: '******' // 不输出实际密码
+    },
+    headers: req.headers,
+    ip: req.ip,
+    method: req.method,
+    path: req.path
+  });
+
   try {
     const { username, email, password } = req.body;
+
+    // 输入验证
+    if (!username || !email || !password) {
+      console.log('缺少必要参数:', { username: !!username, email: !!email, password: !!password });
+      return res.status(400).json({
+        success: false,
+        message: '请提供完整的注册信息'
+      });
+    }
 
     // 检查用户是否已存在
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      console.log('用户已存在:', existingUser); // 添加日志
-      return res.status(400).json({ 
+      console.log('用户已存在:', {
+        id: existingUser._id,
+        username: existingUser.username,
+        email: existingUser.email,
+        conflictField: existingUser.email === email ? 'email' : 'username'
+      });
+      return res.status(400).json({
         success: false,
         message: existingUser.email === email ? '该邮箱已被注册' : '该用户名已被使用'
       });
@@ -25,11 +49,21 @@ router.post('/register', async (req, res) => {
       username,
       email,
       password,
-      userType: 'user' // 默认注册为普通用户
+      userType: 'user'
     });
 
-    console.log('创建新用户:', user); // 添加日志
+    console.log('正在创建新用户:', {
+      username: user.username,
+      email: user.email,
+      userType: user.userType
+    });
+
     await user.save();
+    console.log('用户创建成功:', {
+      id: user._id,
+      username: user.username,
+      email: user.email
+    });
 
     // 生成 token
     const token = jwt.sign(
@@ -38,7 +72,7 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('注册成功，返回用户信息'); // 添加日志
+    console.log('注册成功，返回用户信息');
     res.status(201).json({
       success: true,
       message: '注册成功！',
@@ -52,10 +86,25 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('注册错误:', error); // 添加错误日志
-    res.status(400).json({ 
+    console.error('注册错误:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+
+    // MongoDB 特定错误处理
+    if (error.code === 11000) {
+      console.error('MongoDB 唯一索引冲突:', error.keyPattern);
+      return res.status(400).json({
+        success: false,
+        message: '该用户名或邮箱已被使用'
+      });
+    }
+
+    res.status(500).json({
       success: false,
-      message: '注册失败：' + error.message 
+      message: '注册失败：' + error.message
     });
   }
 });
