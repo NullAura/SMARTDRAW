@@ -7,7 +7,7 @@
         <div class="avatar">
           <img :src="defaultAvatar" alt="用户头像">
         </div>
-        <div class="user-name">简拼用户 05428</div>
+        <div class="user-name">{{ username }}</div>
         <div class="edit-profile" @click="editProfile">
           <i class="fas fa-edit"></i>
           介绍一下自己
@@ -77,10 +77,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import defaultAvatar from '@/assets/head.jpg'
 
 const activeTab = ref('works')
+const username = ref('')
+
+onMounted(() => {
+  // 从本地存储获取用户信息
+  const userInfo = localStorage.getItem('user')
+  if (userInfo) {
+    const user = JSON.parse(userInfo)
+    username.value = user.username || '未知用户'
+  }
+})
 
 const editProfile = () => {
   // 编辑资料
