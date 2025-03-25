@@ -341,9 +341,20 @@ onMounted(() => {
 }
 
 .download-box {
-  width: 100%;
-  height: 200px;
-  margin: 0.5rem 0;
+  width: 60%;
+  height: 180px;
+  margin: 0.3rem auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.download-box i {
+  font-size: 24px;
+  color: #666;
 }
 
 .prompt-section {
@@ -380,7 +391,13 @@ textarea {
   }
 
   .download-box {
-    height: 180px;
+    width: 80%;
+    height: 160px;
+    margin: 0.3rem auto;
+  }
+
+  .download-box i {
+    font-size: 20px;
   }
 
   .prompt-section {
@@ -597,20 +614,6 @@ textarea {
   margin: 6px;
 }
 
-.download-box {
-  width: 70%; /* 取消固定宽度 */
-  max-width: 100%; /* 防止溢出父容器 */
-  height: 250px; /* 设置基础高度 */
-  margin: 0 auto; /* 水平居中 */
-  align-items:center;
-  display: flex;
-  justify-content: center;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-
 .download-placeholder {
   display: flex;
   flex-direction: column;
@@ -618,7 +621,32 @@ textarea {
   justify-content: center;
   height: 100%;
   width: 100%;
-  color: #909399;
+  color: var(--text-secondary);
+}
+
+.download-placeholder i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.download-placeholder p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .upload-box {
+    height: 200px;
+  }
+
+  .download-placeholder i {
+    font-size: 2.5rem;
+  }
+  
+  .download-placeholder p {
+    font-size: 0.8rem;
+  }
 }
 
 .upload-placeholder i {
@@ -742,9 +770,9 @@ textarea {
 }
 
 .download-box {
-  width: 100%;
-  height: 140px;
-  margin: 0.3rem 0;
+  width: 60%;
+  height: 180px;
+  margin: 0.3rem auto;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -842,7 +870,7 @@ textarea {
   }
 
   .download-box {
-    height: 120px;
+    height: 160px;
   }
 }
 
