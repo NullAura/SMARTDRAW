@@ -1,18 +1,28 @@
 <!-- src/layouts/MainLayout.vue -->
 <template>
   <div class="main-layout">
-    <header class="header">
-      <nav>
-        <router-link to="/home">首页</router-link>
-        <router-link to="/store">商店</router-link>
-        <router-link to="/community">社区</router-link>
-        <router-link to="/user">用户中心</router-link>
-      </nav>
-    </header>
-    
     <main class="main-content">
       <router-view />
     </main>
+    
+    <nav class="bottom-nav">
+      <router-link to="/home" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>创作</span>
+      </router-link>
+      <router-link to="/store" class="nav-item">
+        <i class="fas fa-shopping-bag"></i>
+        <span>商城</span>
+      </router-link>
+      <router-link to="/community" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span>社区</span>
+      </router-link>
+      <router-link to="/user" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>我</span>
+      </router-link>
+    </nav>
   </div>
 </template>
 
@@ -27,32 +37,59 @@ export default {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.header {
-  background-color: var(--primary-color);
-  padding: 1rem;
-}
-
-.header nav {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.header a {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-}
-
-.header a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #f5f7fb;
 }
 
 .main-content {
   flex: 1;
-  padding: 2rem;
+  padding-bottom: 60px; /* 为底部导航留出空间 */
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #909399;
+  font-size: 12px;
+  padding: 8px 0;
+  transition: all 0.3s;
+}
+
+.nav-item i {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.nav-item.router-link-active {
+  color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    height: 50px;
+  }
+  
+  .nav-item {
+    font-size: 11px;
+  }
+  
+  .nav-item i {
+    font-size: 18px;
+  }
 }
 </style> 
