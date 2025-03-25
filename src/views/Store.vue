@@ -59,19 +59,15 @@
         <div class="collections-grid">
           <div class="collection-item">
             <img src="@/assets/images/must-buy.png" alt="必买清单">
-            <h3>必买清单</h3>
           </div>
           <div class="collection-item">
             <img src="@/assets/images/work-essentials.png" alt="打工人必备">
-            <h3>打工人必备</h3>
           </div>
           <div class="collection-item">
             <img src="@/assets/images/home-games.png" alt="宅家游戏">
-            <h3>宅家游戏</h3>
           </div>
           <div class="collection-item">
             <img src="@/assets/images/study.png" alt="学有所成">
-            <h3>学有所成</h3>
           </div>
         </div>
       </section>
@@ -236,7 +232,7 @@ export default {
   height: 100vh;
   overflow-y: auto;
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* 为固定导航栏预留空间 */
+  scroll-padding-top: 80px;
 }
 
 .top-nav {
@@ -276,21 +272,20 @@ export default {
 .category-grid, .collections-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 12px;
   margin-top: 24px;
-  max-width: 800px;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .category-item, .collection-item {
   position: relative;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.3s ease;
-  background: #f9f9f9;
-  padding: 12px;
+  background: white;
 }
 
 .category-item:hover, .collection-item:hover {
@@ -302,15 +297,16 @@ export default {
   width: 100%;
   height: 180px;
   object-fit: contain;
-  border-radius: 4px;
   background: white;
+  display: block;
 }
 
 .category-item h3, .collection-item h3 {
-  margin: 12px 0 4px;
+  margin: 8px 0;
   font-size: 14px;
   font-weight: normal;
   text-align: center;
+  padding: 0 8px;
 }
 
 .section-header {
