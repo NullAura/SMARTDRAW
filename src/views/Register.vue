@@ -74,6 +74,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
+import { API_BASE_URL } from '@/config'
 
 export default {
   name: 'Register',
