@@ -83,7 +83,6 @@ export default {
 .community-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 16px;
 }
 
 .top-nav {
@@ -91,9 +90,9 @@ export default {
   top: 0;
   z-index: 100;
   background: white;
-  padding: 16px 0;
+  padding: 16px;
   border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 20px;
+  margin: 0 -16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -102,6 +101,7 @@ export default {
 .nav-items {
   display: flex;
   gap: 32px;
+  margin-left: 20%;
 }
 
 .nav-item {
@@ -120,13 +120,14 @@ export default {
   gap: 24px;
   font-size: 20px;
   color: #333;
+  margin-right: 20%;
 }
 
 .masonry-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  padding: 20px 0;
+  padding: 0 16px;
 }
 
 .masonry-column {
@@ -212,11 +213,27 @@ export default {
   .masonry-container {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .nav-items {
+    margin-left: 10%;
+  }
+  
+  .nav-icons {
+    margin-right: 10%;
+  }
 }
 
 @media (max-width: 480px) {
   .masonry-container {
     grid-template-columns: 1fr;
+  }
+  
+  .nav-items {
+    margin-left: 5%;
+  }
+  
+  .nav-icons {
+    margin-right: 5%;
   }
 }
 </style>
