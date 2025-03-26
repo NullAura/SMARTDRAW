@@ -18,7 +18,7 @@
     <div class="masonry-container">
       <div class="masonry-column">
         <!-- 示例卡片 -->
-        <div class="post-card" v-for="i in 4" :key="'col1-'+i">
+        <div class="post-card" v-for="i in 5" :key="'col1-'+i">
           <div class="card-image placeholder-bg-1"></div>
           <div class="card-content">
             <h3 class="card-title">打造温馨舒适的卧室空间，这些家具搭配太赞了！</h3>
@@ -36,7 +36,7 @@
 
       <div class="masonry-column">
         <!-- 示例卡片 -->
-        <div class="post-card" v-for="i in 3" :key="'col2-'+i">
+        <div class="post-card" v-for="i in 5" :key="'col2-'+i">
           <div class="card-image placeholder-bg-2"></div>
           <div class="card-content">
             <h3 class="card-title">小户型客厅这样布置，瞬间提升档次！</h3>
@@ -46,24 +46,6 @@
               <div class="interaction">
                 <span><i class="far fa-heart"></i> 2.5k</span>
                 <span><i class="far fa-comment"></i> 156</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="masonry-column">
-        <!-- 示例卡片 -->
-        <div class="post-card" v-for="i in 5" :key="'col3-'+i">
-          <div class="card-image placeholder-bg-3"></div>
-          <div class="card-content">
-            <h3 class="card-title">宜家新品开箱，这些家具太实用了！</h3>
-            <div class="user-info">
-              <div class="avatar-placeholder"></div>
-              <span class="username">生活家</span>
-              <div class="interaction">
-                <span><i class="far fa-heart"></i> 3.1k</span>
-                <span><i class="far fa-comment"></i> 245</span>
               </div>
             </div>
           </div>
@@ -125,15 +107,17 @@ export default {
 
 .masonry-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  padding: 0 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 12px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .masonry-column {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .post-card {
@@ -210,10 +194,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .masonry-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
   .nav-items {
     margin-left: 10%;
   }
@@ -224,16 +204,34 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .masonry-container {
-    grid-template-columns: 1fr;
-  }
-  
   .nav-items {
     margin-left: 5%;
   }
   
   .nav-icons {
     margin-right: 5%;
+  }
+
+  .card-content {
+    padding: 8px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    margin: 0 0 8px;
+  }
+
+  .user-info {
+    gap: 6px;
+  }
+
+  .username {
+    font-size: 11px;
+  }
+
+  .interaction {
+    gap: 8px;
+    font-size: 11px;
   }
 }
 </style>
