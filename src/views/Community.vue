@@ -111,19 +111,22 @@ export default {
 .community-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding-top: 60px; /* 为固定导航栏留出空间 */
 }
 
 .top-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   background: white;
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
-  margin: 0 -16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .nav-items {
