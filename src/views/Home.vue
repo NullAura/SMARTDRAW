@@ -20,9 +20,12 @@
     </div>
 
     <div class="main-content">
-      <!-- 左上角菜单按钮 -->
-      <div class="menu-button">
-        <i class="fas fa-bars" @click="toggleSidebar"></i>
+      <!-- 顶部标签栏 -->
+      <div class="top-header">
+        <div class="header-left">
+          <i class="fas fa-bars menu-icon" @click="toggleSidebar"></i>
+          <h1>智绘家居</h1>
+        </div>
       </div>
 
       <!-- 功能切换栏 -->
@@ -61,7 +64,7 @@
                   <img v-if="img" :src="img.preview" class="preview-thumbnail" alt="">
                   <div v-else class="upload-placeholder">
                     <i class="fas fa-image"></i>
-                    <p>上传图片 {{ idx + 1 }}</p>
+                    <p>{{ idx === 0 ? '原始家居图' : '替换家具' }}</p>
                   </div>
                   <input
                       type="file"
@@ -313,12 +316,20 @@ onMounted(() => {
   -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100vw;
+  padding-top: 60px; /* 为固定导航栏留出空间 */
+  position: relative;
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 
 .main-content {
-  padding: 0.5rem;
+  padding: 0;
   width: 100%;
   max-width: 100vw;
+}
+
+.main-content > *:not(.top-header) {
+  padding: 0.5rem;
 }
 
 .function-bar {
@@ -506,7 +517,7 @@ textarea {
 .home-container {
   position: relative;
   min-height: 100vh;
-  background: #f3eadd;
+  background: #f5f5f5;
 }
 
 .sidebar {
@@ -884,41 +895,58 @@ img {
 }
 
 .menu-button {
+  display: none;
+}
+
+/* 修改顶部标签栏样式 */
+.top-header {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
-  width: 40px;
-  height: 40px;
+  background: white;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.menu-icon {
+  font-size: 1.2rem;
+  color: var(--primary-color);
   cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
   transition: all 0.3s;
 }
 
-.menu-button i {
-  font-size: 1.2rem;
-  color: var(--primary-color);
+.menu-icon:hover {
+  background: rgba(0,0,0,0.05);
 }
 
-.menu-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.header-left h1 {
+  font-size: 1.2rem;
+  color: #000;
+  margin: 0;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
-  .menu-button {
-    top: 8px;
-    left: 8px;
-    width: 36px;
-    height: 36px;
+  .top-header {
+    padding: 12px 16px;
   }
-  
-  .menu-button i {
+
+  .header-left h1 {
     font-size: 1.1rem;
   }
 }
