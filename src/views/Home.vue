@@ -30,6 +30,9 @@
 
       <!-- 功能切换栏 -->
       <div class="function-bar">
+        <div class="scroll-hint left" v-show="activeFunction > 0">
+          <i class="fas fa-chevron-left"></i>
+        </div>
         <div
             class="function-track"
             :style="{ transform: `translateX(${trackPosition}%)` }"
@@ -45,6 +48,9 @@
           >
             {{ func.name }}
           </div>
+        </div>
+        <div class="scroll-hint right" v-show="activeFunction < functions.length - 1">
+          <i class="fas fa-chevron-right"></i>
         </div>
       </div>
 
@@ -335,6 +341,12 @@ onMounted(() => {
 .function-bar {
   margin-bottom: 0.5rem;
   width: 100%;
+  overflow: hidden;
+  height: 50px;
+  position: relative;
+  touch-action: pan-y;
+  display: flex;
+  align-items: center;
 }
 
 .function-item {
@@ -721,13 +733,6 @@ textarea {
   border-radius: 12px;
 }
 
-.function-bar {
-  overflow: hidden;
-  height: 50px;
-  position: relative;
-  touch-action: pan-y;
-}
-
 .function-track {
   display: flex;
   position: absolute;
@@ -948,6 +953,69 @@ img {
 
   .header-left h1 {
     font-size: 1.1rem;
+  }
+}
+
+.scroll-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  animation: pulse 2s infinite;
+}
+
+.scroll-hint.left {
+  left: 10px;
+}
+
+.scroll-hint.right {
+  right: 10px;
+}
+
+.scroll-hint i {
+  color: var(--primary-color);
+  font-size: 0.8rem;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translateY(-50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 768px) {
+  .scroll-hint {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .scroll-hint i {
+    font-size: 0.7rem;
+  }
+  
+  .scroll-hint.left {
+    left: 5px;
+  }
+  
+  .scroll-hint.right {
+    right: 5px;
   }
 }
 </style>
