@@ -960,16 +960,12 @@ img {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 2;
-  animation: pulse 2s infinite;
 }
 
 .scroll-hint.left {
@@ -982,32 +978,29 @@ img {
 
 .scroll-hint i {
   color: var(--primary-color);
-  font-size: 0.8rem;
+  font-size: 1.2rem;
+  animation: arrowPulse 1.5s infinite;
 }
 
-@keyframes pulse {
-  0% {
-    transform: translateY(-50%) scale(1);
-    opacity: 0.8;
+@keyframes arrowPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    transform: translateY(-50%) scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-50%) scale(1);
-    opacity: 0.8;
+    opacity: 0.5;
+    transform: scale(0.8);
   }
 }
 
 @media (max-width: 768px) {
   .scroll-hint {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
   }
   
   .scroll-hint i {
-    font-size: 0.7rem;
+    font-size: 1rem;
   }
   
   .scroll-hint.left {
