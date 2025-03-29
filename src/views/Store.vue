@@ -27,7 +27,10 @@
         </div>
         <div class="nav-icons">
           <i class="fas fa-search"></i>
-          <i class="fas fa-shopping-cart"></i>
+          <div class="cart-icon" @click="goToCart">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</span>
+          </div>
         </div>
       </nav>
 
@@ -183,6 +186,7 @@ export default {
   data() {
     return {
       activeSection: 'hot',
+      cartCount: 0,
       sections: [
         { id: 'hot', title: '热门' },
         { id: 'collections', title: '主题合集' },
@@ -232,11 +236,39 @@ export default {
         name: 'ProductList', 
         params: { category: encodeURIComponent(category) } 
       });
+    },
+    goToCart() {
+      this.$router.push('/cart');
+    },
+    // 获取购物车中商品数量
+    getCartCount() {
+      const cartData = localStorage.getItem('cartItems');
+      if (cartData) {
+        const cartItems = JSON.parse(cartData);
+        this.cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+      } else {
+        this.cartCount = 0;
+      }
+    },
+    // 监听购物车更新事件
+    handleStorageEvent(event) {
+      if (event.key === 'cartItems' || event.key === 'cartUpdated') {
+        this.getCartCount();
+      }
     }
   },
   mounted() {
     // 初始化时检查一次滚动位置
     this.handleScroll();
+    // 获取购物车数量
+    this.getCartCount();
+    
+    // 监听storage事件，当购物车数据更新时更新数量
+    window.addEventListener('storage', this.handleStorageEvent);
+  },
+  beforeUnmount() {
+    // 移除storage事件监听
+    window.removeEventListener('storage', this.handleStorageEvent);
   }
 }
 </script>
@@ -328,8 +360,29 @@ export default {
 
 .nav-icons {
   display: flex;
-  gap: 24px;
-  font-size: 20px;
+  gap: 20px;
+  font-size: 18px;
+  align-items: center;
+}
+
+.cart-icon {
+  position: relative;
+  cursor: pointer;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff5000;
+  color: white;
+  border-radius: 10px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 10px;
+  padding: 0 4px;
 }
 
 .category-grid, .collections-grid {

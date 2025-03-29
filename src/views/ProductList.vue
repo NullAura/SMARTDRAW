@@ -34,7 +34,12 @@
 
     <!-- 商品列表 -->
     <div class="products-grid">
-      <div v-for="(product, index) in filteredProducts" :key="index" class="product-card">
+      <div 
+        v-for="(product, index) in filteredProducts" 
+        :key="index" 
+        class="product-card"
+        @click="goToProductDetail(product.id)"
+      >
         <div class="product-image">
           <div class="placeholder-image">{{ product.name.charAt(0) }}</div>
           <div v-if="product.tag" class="product-tag">{{ product.tag }}</div>
@@ -59,6 +64,7 @@ export default {
       // 模拟商品数据
       products: [
         {
+          id: '1',
           name: 'DUKTIG 杜克迪',
           description: '玩具厨房, 72x40x109 厘米',
           price: '699',
@@ -67,6 +73,7 @@ export default {
           subInfo: '满足孩子当小厨师的乐趣'
         },
         {
+          id: '2',
           name: 'BYGGLEK 比格列克',
           description: '积木 201件套',
           price: '69',
@@ -74,6 +81,7 @@ export default {
           subInfo: '乐高联名，可另配积木盒'
         },
         {
+          id: '3',
           name: 'TROFAST 舒法特',
           description: '储物组合带盒, 99x44x52 厘米',
           price: '697',
@@ -81,18 +89,21 @@ export default {
           tag: '新品'
         },
         {
+          id: '4',
           name: 'GOSIG 古西格',
           description: '毛绒玩具, 金毛犬, 40 厘米',
           price: '99',
           priceDecimal: '00'
         },
         {
+          id: '5',
           name: 'MAMMUT 玛莫特',
           description: '儿童椅, 室内/户外, 35 厘米',
           price: '89',
           priceDecimal: '99'
         },
         {
+          id: '6',
           name: 'SUNDVIK 桑维',
           description: '儿童床, 140x70 厘米',
           price: '1499',
@@ -111,6 +122,12 @@ export default {
   methods: {
     goBack() {
       this.$router.go(-1);
+    },
+    goToProductDetail(productId) {
+      this.$router.push({
+        name: 'ProductDetail',
+        params: { id: productId }
+      });
     }
   },
   created() {
@@ -200,6 +217,13 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .product-image {

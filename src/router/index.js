@@ -8,6 +8,8 @@ import User from '@/views/User.vue'
 import Store from '@/views/Store.vue'
 import Community from '@/views/Community.vue'
 import ProductList from '@/views/ProductList.vue'
+import ProductDetail from '@/views/ProductDetail.vue'
+import Cart from '@/views/Cart.vue'
 
 const routes = [
   { 
@@ -50,6 +52,18 @@ const routes = [
         path: 'products/:category',
         name: 'ProductList',
         component: ProductList,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'product/:id',
+        name: 'ProductDetail',
+        component: ProductDetail,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'cart',
+        name: 'Cart',
+        component: Cart,
         meta: { requiresAuth: true }
       }
     ]
