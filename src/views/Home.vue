@@ -80,6 +80,15 @@
                   >
                 </div>
               </div>
+              <!-- 从购物车导入按钮，去掉条件判断，始终显示 -->
+              <div 
+                  class="import-from-cart"
+                  :class="{ 'replace-mode': replaceImages[1] !== null }"
+                  @click="showCartItems"
+              >
+                <i class="fas" :class="replaceImages[1] ? 'fa-sync-alt' : 'fa-shopping-cart'"></i>
+                <p>{{ replaceImages[1] ? '重新选择替换家具' : '从购物车导入替换家具' }}</p>
+              </div>
             </template>
 
             <div v-else class="simple-upload">
@@ -147,12 +156,68 @@
       </div>
     </div>
     <div v-if="sidebarOpen" class="sidebar-mask" @click="toggleSidebar"></div>
+
+    <!-- 购物车商品选择弹窗 -->
+    <div v-if="cartSelectVisible" class="cart-select-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>选择购物车商品</h3>
+          <i class="fas fa-times" @click="closeCartSelect"></i>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="cart-search-box">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            v-model="cartSearchQuery" 
+            placeholder="搜索商品名称..."
+            @input="filterCartItems"
+          >
+        </div>
+        
+        <div class="cart-items-list">
+          <div v-if="filteredCartProducts.length === 0" class="empty-cart-notice">
+            <i class="fas fa-shopping-basket"></i>
+            <p>{{ cartProducts.length === 0 ? '购物车中没有商品' : '没有找到匹配的商品' }}</p>
+            <button v-if="cartProducts.length === 0" @click="goToStore">去商城看看</button>
+            <button v-else @click="cartSearchQuery = ''">查看全部</button>
+          </div>
+          <div 
+            v-for="(item, index) in filteredCartProducts" 
+            :key="index"
+            class="cart-product-item"
+            @click="selectCartItem(item)"
+          >
+            <div class="cart-product-image">
+              <div class="placeholder-image">{{ item.name.charAt(0) }}</div>
+            </div>
+            <div class="cart-product-info">
+              <div class="cart-product-name">{{ item.name }}</div>
+              <div class="cart-product-desc" v-if="item.description">{{ item.description }}</div>
+              <div class="cart-product-price">¥{{ item.price }}.{{ item.priceDecimal }}</div>
+            </div>
+            <div class="select-indicator">
+              <i class="fas fa-check-circle"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 底部按钮区域 -->
+        <div class="cart-modal-footer">
+          <button class="cancel-btn" @click="closeCartSelect">取消</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
+import { useRouter } from 'vue-router'
+import { showToast, showLoadingToast } from 'vant'
+import 'vant/es/toast/style'
 
 // 响应式状态
 const sidebarOpen = ref(false)
@@ -161,6 +226,7 @@ const trackPosition = ref(0)
 const touchStartX = ref(0)
 const transitionName = ref('slide-left')
 const isGenerating = ref(false)
+const router = useRouter()
 
 // 图片相关
 const replaceImages = ref([null, null])
@@ -168,6 +234,12 @@ const simpleImage = ref(null)
 const generatedImage = ref(null)
 const fileInputs = ref([])
 const simpleInput = ref(null)
+
+// 购物车相关
+const cartSelectVisible = ref(false)
+const cartProducts = ref([])
+const cartSearchQuery = ref('')
+const filteredCartProducts = ref([])
 
 // 提示词
 const prompt = ref('')
@@ -306,11 +378,385 @@ const generateImage = async () => {
   }
 }
 
+// 显示购物车商品选择弹窗
+const showCartItems = () => {
+  // 从localStorage加载购物车数据
+  try {
+    const cartData = localStorage.getItem('cartItems')
+    console.log('购物车原始数据:', cartData)
+    
+    if (cartData) {
+      try {
+        const parsedData = JSON.parse(cartData)
+        console.log('解析后的购物车数据:', parsedData)
+        
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          cartProducts.value = parsedData
+          filteredCartProducts.value = [...parsedData]
+          console.log('购物车商品数量:', parsedData.length)
+        } else {
+          console.log('购物车为空或格式不正确')
+          cartProducts.value = []
+          filteredCartProducts.value = []
+          
+          // 添加测试数据用于演示
+          const testItems = [
+            {
+              id: '1',
+              name: 'TRÅDFRI 特拉德菲',
+              description: '智能LED灯泡',
+              price: '49',
+              priceDecimal: '00',
+              quantity: 1,
+              selected: true
+            },
+            {
+              id: '2',
+              name: 'SYMFONISK 希姆弗斯',
+              description: '书架式WiFi音箱',
+              price: '699',
+              priceDecimal: '00',
+              quantity: 1,
+              selected: true
+            }
+          ]
+          
+          cartProducts.value = testItems
+          filteredCartProducts.value = [...testItems]
+          console.log('已添加测试数据')
+          
+          // 保存到本地存储，方便下次测试
+          localStorage.setItem('cartItems', JSON.stringify(testItems))
+        }
+      } catch (e) {
+        console.error('购物车数据解析失败:', e)
+        
+        // 添加测试数据
+        const testItems = [
+          {
+            id: '1',
+            name: 'TRÅDFRI 特拉德菲',
+            description: '智能LED灯泡',
+            price: '49',
+            priceDecimal: '00',
+            quantity: 1,
+            selected: true
+          }
+        ]
+        
+        cartProducts.value = testItems
+        filteredCartProducts.value = [...testItems]
+        console.log('解析失败，已添加测试数据')
+      }
+    } else {
+      console.log('购物车本地存储为空')
+      cartProducts.value = []
+      filteredCartProducts.value = []
+      
+      // 添加测试数据
+      const testItems = [
+        {
+          id: '1',
+          name: 'TRÅDFRI 特拉德菲',
+          description: '智能LED灯泡', 
+          price: '49',
+          priceDecimal: '00',
+          quantity: 1,
+          selected: true
+        }
+      ]
+      
+      cartProducts.value = testItems
+      filteredCartProducts.value = [...testItems]
+      console.log('本地存储为空，已添加测试数据')
+      
+      // 保存到本地存储，方便下次测试
+      localStorage.setItem('cartItems', JSON.stringify(testItems))
+    }
+  } catch (error) {
+    console.error('加载购物车数据失败:', error)
+    cartProducts.value = []
+    filteredCartProducts.value = []
+    
+    // 出错时也添加测试数据
+    const testItems = [
+      {
+        id: '1',
+        name: 'TRÅDFRI 特拉德菲',
+        description: '智能LED灯泡',
+        price: '49',
+        priceDecimal: '00',
+        quantity: 1,
+        selected: true
+      }
+    ]
+    
+    cartProducts.value = testItems
+    filteredCartProducts.value = [...testItems]
+    console.log('加载失败，已添加测试数据')
+  }
+  
+  cartSearchQuery.value = ''
+  cartSelectVisible.value = true
+}
+
+// 关闭购物车商品选择弹窗
+const closeCartSelect = () => {
+  cartSelectVisible.value = false
+}
+
+// 选择购物车商品
+const selectCartItem = async (item) => {
+  try {
+    console.log('选择的商品:', item)
+    
+    // 输入验证
+    if (!item || !item.name) {
+      console.error('无效的商品数据')
+      showToast({
+        message: '商品数据无效',
+        type: 'fail'
+      })
+      return
+    }
+    
+    // 首先显示加载状态
+    const loadingToast = showLoadingToast({
+      message: '正在加载商品图片...',
+      forbidClick: true,
+      duration: 0
+    })
+    
+    try {
+      // 模拟创建图像数据
+      const placeholderCanvas = document.createElement('canvas')
+      const ctx = placeholderCanvas.getContext('2d')
+      
+      if (!ctx) {
+        throw new Error('无法创建Canvas上下文')
+      }
+      
+      placeholderCanvas.width = 400
+      placeholderCanvas.height = 400
+      
+      // 绘制一个渐变背景
+      const gradient = ctx.createLinearGradient(0, 0, 400, 400)
+      gradient.addColorStop(0, '#f8f4eb')
+      gradient.addColorStop(1, '#e5dfd3')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, 400, 400)
+      
+      // 绘制边框
+      ctx.strokeStyle = '#dccfbf'
+      ctx.lineWidth = 10
+      ctx.strokeRect(10, 10, 380, 380)
+      
+      // 在中心绘制商品名称首字母
+      ctx.fillStyle = '#3c2913'
+      ctx.font = 'bold 160px Arial'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(item.name.charAt(0), 200, 180)
+      
+      // 在下方绘制商品名称
+      ctx.font = 'bold 36px Arial'
+      
+      // 截断过长的商品名
+      let displayName = item.name
+      if (displayName.length > 10) {
+        displayName = displayName.substring(0, 10) + '...'
+      }
+      
+      ctx.fillText(displayName, 200, 300)
+      
+      // 创建一个模拟文件对象
+      const dataUrl = placeholderCanvas.toDataURL('image/jpeg', 0.9)
+      console.log('生成的图片数据URL长度:', dataUrl.length)
+      
+      // 从DataURL中提取Base64数据
+      const base64Data = dataUrl.split(',')[1]
+      
+      if (!base64Data) {
+        throw new Error('生成的图片数据无效')
+      }
+      
+      // 转换Base64为Blob
+      const byteCharacters = atob(base64Data)
+      const byteArrays = []
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArrays.push(byteCharacters.charCodeAt(i))
+      }
+      
+      const blob = new Blob([new Uint8Array(byteArrays)], { type: 'image/jpeg' })
+      console.log('Blob大小:', blob.size, 'bytes')
+      
+      if (blob.size === 0) {
+        throw new Error('生成的Blob大小为0')
+      }
+      
+      // 创建File对象
+      const file = new File([blob], `${item.name}.jpg`, { type: 'image/jpeg' })
+      
+      // 创建商品图像缩略图
+      const processed = {
+        file,
+        preview: dataUrl,
+        dimensions: { width: 400, height: 400 },
+        productInfo: { ...item } // 保存商品信息以便在生成过程中使用
+      }
+      
+      console.log('图片处理完成，准备设置替换家具图片')
+      
+      // 设置为替换家具图片
+      replaceImages.value = replaceImages.value.map((img, idx) => 
+        idx === 1 ? processed : img
+      )
+      
+      console.log('替换家具图片已设置:', replaceImages.value[1] !== null)
+      
+      // 不再自动添加提示词
+      
+      // 关闭加载提示
+      loadingToast.close()
+      
+      // 显示成功提示
+      showToast({
+        message: `已选择 ${item.name}`,
+        position: 'bottom'
+      })
+      
+      // 关闭弹窗
+      closeCartSelect()
+      
+      // 如果原始家居图也已上传，可以建议用户直接生成
+      if (replaceImages.value[0] !== null) {
+        // 轻微延迟，让用户看到图像已加载
+        setTimeout(() => {
+          showToast({
+            message: '家具替换准备就绪，可以点击"立即生成"',
+            position: 'bottom'
+          })
+        }, 1000)
+      } else {
+        // 提示用户上传原始图片
+        setTimeout(() => {
+          showToast({
+            message: '请上传原始家居图片',
+            position: 'bottom'
+          })
+        }, 1000)
+      }
+    } catch (innerError) {
+      console.error('图片处理过程中出错:', innerError)
+      loadingToast.close()
+      
+      // 确保在备用方案中也不添加提示词
+      try {
+        console.log('使用备用方案生成图片')
+        
+        // 创建简单的纯色背景图像
+        const simpleCanvas = document.createElement('canvas')
+        simpleCanvas.width = 200
+        simpleCanvas.height = 200
+        const simpleCtx = simpleCanvas.getContext('2d')
+        
+        if (!simpleCtx) {
+          throw new Error('无法创建简单Canvas上下文')
+        }
+        
+        // 绘制背景
+        simpleCtx.fillStyle = '#e5dfd3'
+        simpleCtx.fillRect(0, 0, 200, 200)
+        
+        // 绘制文字
+        simpleCtx.fillStyle = '#3c2913'
+        simpleCtx.font = '80px Arial'
+        simpleCtx.textAlign = 'center'
+        simpleCtx.textBaseline = 'middle'
+        simpleCtx.fillText(item.name.charAt(0), 100, 100)
+        
+        const simpleDataUrl = simpleCanvas.toDataURL('image/jpeg', 0.8)
+        
+        // 将DataURL转换为Blob
+        const simpleBase64 = simpleDataUrl.split(',')[1]
+        const simpleByteCharacters = atob(simpleBase64)
+        const simpleByteArray = new Uint8Array(simpleByteCharacters.length)
+        
+        for (let i = 0; i < simpleByteCharacters.length; i++) {
+          simpleByteArray[i] = simpleByteCharacters.charCodeAt(i)
+        }
+        
+        // 创建Blob对象
+        const simpleBlob = new Blob([simpleByteArray], { type: 'image/jpeg' })
+        
+        // 创建一个简单的File对象
+        const simpleFile = new File([simpleBlob], `${item.name}.jpg`, { type: 'image/jpeg' })
+        
+        // 创建简单的商品图像对象
+        const simplePlaceholder = {
+          file: simpleFile,
+          preview: simpleDataUrl,
+          dimensions: { width: 200, height: 200 },
+          productInfo: { ...item }
+        }
+        
+        // 设置为替换家具图片
+        replaceImages.value = replaceImages.value.map((img, idx) => 
+          idx === 1 ? simplePlaceholder : img
+        )
+        
+        console.log('使用备用方案设置替换家具图片成功')
+        
+        // 不再自动添加提示词
+        
+        showToast({
+          message: `已选择 ${item.name}`,
+          position: 'bottom'
+        })
+        
+        closeCartSelect()
+      } catch (fallbackError) {
+        console.error('备用图片处理方案也失败:', fallbackError)
+        showToast({
+          message: '无法处理图片，请重试',
+          type: 'fail'
+        })
+      }
+    }
+  } catch (error) {
+    console.error('选择购物车商品失败:', error)
+    showToast({
+      message: '选择商品失败，请重试',
+      type: 'fail'
+    })
+  }
+}
+
+// 跳转到商城
+const goToStore = () => {
+  router.push('/store')
+}
+
 // 初始化草稿
 onMounted(() => {
   const draft = localStorage.getItem('draft_prompt')
   if (draft) prompt.value = draft
 })
+
+// 筛选购物车商品
+const filterCartItems = () => {
+  const query = cartSearchQuery.value.toLowerCase().trim()
+  if (!query) {
+    filteredCartProducts.value = [...cartProducts.value]
+    return
+  }
+  
+  filteredCartProducts.value = cartProducts.value.filter(item => 
+    item.name.toLowerCase().includes(query) || 
+    (item.description && item.description.toLowerCase().includes(query))
+  )
+}
 </script>
 
 <style scoped>
@@ -1009,6 +1455,307 @@ img {
   
   .scroll-hint.right {
     right: 5px;
+  }
+}
+
+/* 从购物车导入按钮样式 */
+.import-from-cart {
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s;
+  width: 100%;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.import-from-cart:hover {
+  background: rgba(220, 207, 191, 0.3);
+  transform: translateY(-2px);
+}
+
+.import-from-cart i {
+  font-size: 20px;
+  color: var(--primary-color);
+  margin-right: 10px;
+  transition: transform 0.3s;
+}
+
+.import-from-cart:hover i {
+  transform: rotate(15deg);
+}
+
+.import-from-cart.replace-mode {
+  border-color: #b9a88a;
+  background: rgba(244, 240, 232, 0.9);
+}
+
+.import-from-cart.replace-mode i {
+  color: #8a7350;
+}
+
+.import-from-cart.replace-mode:hover i {
+  transform: rotate(180deg);
+}
+
+.import-from-cart p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* 购物车商品选择弹窗样式 */
+.cart-select-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  width: 92%;
+  max-width: 420px;
+  max-height: 85vh;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  background: var(--bg-secondary);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+.modal-header i {
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--primary-color);
+  transition: transform 0.2s;
+  padding: 8px;
+}
+
+.modal-header i:hover {
+  transform: rotate(90deg);
+}
+
+.cart-search-box {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  background: #f9f9f9;
+}
+
+.cart-search-box i {
+  color: #999;
+  margin-right: 10px;
+}
+
+.cart-search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.cart-items-list {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  max-height: 50vh;
+}
+
+.cart-product-item {
+  display: flex;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  position: relative;
+}
+
+.cart-product-item:hover {
+  background: #f9f9f9;
+}
+
+.cart-product-item:active {
+  background: #f0f0f0;
+  transform: scale(0.98);
+}
+
+.cart-product-image {
+  width: 64px;
+  height: 64px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #666;
+  flex-shrink: 0;
+  border: 1px solid #eee;
+  overflow: hidden;
+}
+
+.cart-product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cart-product-name {
+  font-size: 16px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #333;
+}
+
+.cart-product-desc {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.cart-product-price {
+  font-size: 15px;
+  color: #ff6b00;
+  font-weight: 500;
+}
+
+.select-indicator {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-color);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.cart-product-item:hover .select-indicator {
+  opacity: 0.5;
+}
+
+.empty-cart-notice {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-cart-notice i {
+  font-size: 40px;
+  color: #ddd;
+  margin-bottom: 16px;
+}
+
+.empty-cart-notice p {
+  margin-bottom: 20px;
+  color: #999;
+}
+
+.empty-cart-notice button {
+  padding: 8px 24px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.empty-cart-notice button:hover {
+  background: #2a1d0f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 底部按钮区域 */
+.cart-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  padding: 8px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #f5f5f5;
+}
+
+/* 适配移动设备 */
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 80vh;
+    border-radius: 12px 12px 0 0;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    animation: slideInBottom 0.3s ease;
+  }
+  
+  @keyframes slideInBottom {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  
+  .cart-items-list {
+    max-height: none;
   }
 }
 </style>
