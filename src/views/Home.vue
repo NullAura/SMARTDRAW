@@ -116,6 +116,7 @@
                     :src="generatedImage"
                     class="result-image"
                     loading="lazy"
+                    @error="handleImageError"
                     alt="生成结果">
                 <div class="toolbar">
                   <button @click="downloadImage">
@@ -127,7 +128,25 @@
                 </div>
               </template>
               <div v-else class="download-placeholder">
-                <div class="placeholder-content">
+                <div v-if="isGenerating" class="generating-indicator">
+                  <div class="spinner"></div>
+                  <p>正在生成中...</p>
+                </div>
+                <div v-else-if="generationError" class="error-container">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p class="error-title">生成失败</p>
+                  <p class="error-message">{{ generationError }}</p>
+                  <div v-if="errorDetails" class="error-details">
+                    <details>
+                      <summary>错误详情</summary>
+                      <div class="details-content">{{ errorDetails }}</div>
+                    </details>
+                  </div>
+                  <button class="retry-btn" @click="retryGeneration">
+                    <i class="fas fa-sync-alt"></i> 重试
+                  </button>
+                </div>
+                <div v-else class="placeholder-content">
                   <i class="fas fa-image"></i>
                   <p>生成结果预览</p>
                 </div>
@@ -209,6 +228,18 @@
         </div>
       </div>
     </div>
+
+    <!-- 调试信息面板，仅在调试模式下显示 -->
+    <div v-if="isDebugMode && generationError" class="debug-panel">
+      <div class="debug-header">
+        <h3>调试信息</h3>
+        <span class="debug-label">开发模式</span>
+      </div>
+      <div class="debug-content">
+        <p><strong>错误消息:</strong> {{ generationError }}</p>
+        <p v-if="errorDetails"><strong>详情:</strong> {{ errorDetails }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -218,6 +249,9 @@ import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast } from 'vant'
 import 'vant/es/toast/style'
+
+// 调试模式开关
+const isDebugMode = import.meta.env.MODE === 'development' || import.meta.env.VITE_DEBUG_MODE === 'true'
 
 // 响应式状态
 const sidebarOpen = ref(false)
@@ -255,6 +289,22 @@ const functions = ref([
 
 // 计算属性
 const isReplaceMode = computed(() => functions.value[activeFunction.value].type === 'replace')
+
+// 错误相关状态
+const generationError = ref(null)
+const errorDetails = ref(null)
+
+// 重置错误状态
+const resetError = () => {
+  generationError.value = null
+  errorDetails.value = null
+}
+
+// 重试生成
+const retryGeneration = () => {
+  resetError()
+  generateImage()
+}
 
 // 侧边栏开关
 const toggleSidebar = () => {
@@ -365,16 +415,301 @@ const handleSimpleUpload = async (event) => {
   }
 }
 
+// 带重试机制的API请求
+const fetchWithRetry = async (url, options, maxRetries = 2) => {
+  let lastError
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fetch(url, options)
+    } catch (error) {
+      console.warn(`请求失败，正在重试 (${i+1}/${maxRetries})...`, error)
+      lastError = error
+      
+      // 等待一段时间再重试（指数退避策略）
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)))
+    }
+  }
+  
+  // 所有重试均失败，抛出最后一个错误
+  throw lastError
+}
+
+// 显示带有调试信息的错误提示
+const showErrorToast = (message, details = null, duration = 5000) => {
+  // 在调试模式下，包含详细信息
+  let displayMessage = message
+  
+  if (isDebugMode && details) {
+    displayMessage = `${message}\n${details}`
+  }
+  
+  showToast({
+    message: displayMessage,
+    type: 'fail',
+    duration
+  })
+}
+
 // 生成图片
 const generateImage = async () => {
+  // 清除上一次的错误
+  resetError()
+
+  // 检查必要条件
+  if ((isReplaceMode.value && (!replaceImages.value[0] || !replaceImages.value[1])) || 
+      (!isReplaceMode.value && !simpleImage.value)) {
+    showToast({
+      message: isReplaceMode.value ? '请上传原始图片和替换家具' : '请上传参考图片',
+      type: 'fail'
+    })
+    return
+  }
+
+  if (!prompt.value.trim()) {
+    showToast({
+      message: '请输入创作提示词',
+      type: 'fail'
+    })
+    return
+  }
+
   try {
     isGenerating.value = true
-    // 模拟生成过程
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    // 这里替换为真实生成逻辑
-    generatedImage.value = '/images/success3.png'
+    
+    // 显示加载提示
+    const loadingToast = showLoadingToast({
+      message: '正在生成图片，请稍候...',
+      forbidClick: true,
+      duration: 0
+    })
+    
+    // 创建FormData对象
+    const formData = new FormData()
+    
+    // 根据模式选择不同的处理方式
+    if (isReplaceMode.value) {
+      // 智能替换模式 - 需要上传两张图片和额外参数
+      formData.append('image', replaceImages.value[0].file) // 原始家居图
+      formData.append('furniture', replaceImages.value[1].file) // 替换家具图
+      formData.append('mode', 'replace') // 指定模式为替换
+      
+      // 记录上传图片信息用于调试
+      console.log('上传原始图片:', {
+        name: replaceImages.value[0].file.name,
+        type: replaceImages.value[0].file.type,
+        size: (replaceImages.value[0].file.size / 1024).toFixed(2) + 'KB',
+        dimensions: replaceImages.value[0].dimensions
+      })
+      
+      console.log('上传替换家具:', {
+        name: replaceImages.value[1].file.name,
+        type: replaceImages.value[1].file.type,
+        size: (replaceImages.value[1].file.size / 1024).toFixed(2) + 'KB',
+        dimensions: replaceImages.value[1].dimensions
+      })
+    } else {
+      // 快速生成模式 - 上传单张参考图
+      formData.append('image', simpleImage.value.file) // 参考图
+      formData.append('mode', 'generate') // 指定模式为生成
+      
+      // 记录上传图片信息用于调试
+      console.log('上传参考图片:', {
+        name: simpleImage.value.file.name,
+        type: simpleImage.value.file.type,
+        size: (simpleImage.value.file.size / 1024).toFixed(2) + 'KB',
+        dimensions: simpleImage.value.dimensions
+      })
+    }
+    
+    // 共同参数
+    formData.append('username', 'user123') // 用户标识
+    formData.append('prompt', prompt.value) // 提示词
+    formData.append('return_type', 'url') // 返回类型：url 或 base64
+    
+    // 记录请求参数
+    console.log(`正在发送${isReplaceMode.value ? '智能替换' : '快速生成'}请求:`, {
+      模式: isReplaceMode.value ? 'replace' : 'generate',
+      提示词: prompt.value,
+      返回类型: 'url'
+    })
+    
+    // 发送请求到API服务器
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://121.41.225.168:8000'
+    const endpoint = isReplaceMode.value ? '/replace' : '/generate' // 根据模式使用不同的接口
+    
+    console.log(`请求URL: ${apiUrl}${endpoint}`)
+    
+    // 添加计时器，计算请求耗时
+    const startTime = Date.now()
+    
+    try {
+      // 使用重试机制发送请求
+      const response = await fetchWithRetry(`${apiUrl}${endpoint}`, {
+        method: 'POST',
+        body: formData
+      }, 2) // 最多重试2次
+      
+      // 计算请求耗时
+      const requestTime = Date.now() - startTime
+      console.log(`请求耗时: ${requestTime}ms`)
+      
+      // 关闭加载提示
+      loadingToast.close()
+      
+      // 记录响应状态
+      console.log('响应状态:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries([...response.headers.entries()])
+      })
+      
+      if (!response.ok) {
+        let errorMessage = '服务器处理失败'
+        let errorDetails = null
+        
+        try {
+          const errorData = await response.json()
+          console.error('服务器返回错误:', errorData)
+          errorMessage = errorData.message || errorMessage
+          errorDetails = errorData.details || errorData.error || null
+        } catch (e) {
+          // 如果响应不是JSON格式
+          console.error('解析响应失败:', e)
+          
+          // 尝试读取响应文本
+          try {
+            const textResponse = await response.text()
+            console.error('服务器返回非JSON数据:', textResponse)
+            if (textResponse) {
+              errorDetails = `服务器返回: ${textResponse.substring(0, 100)}${textResponse.length > 100 ? '...' : ''}`
+            }
+          } catch (textError) {
+            console.error('读取响应文本失败:', textError)
+          }
+          
+          errorMessage = `服务器错误: ${response.status} ${response.statusText}`
+        }
+        
+        const error = new Error(errorMessage)
+        error.details = errorDetails
+        error.statusCode = response.status
+        throw error
+      }
+      
+      const result = await response.json()
+      console.log('服务器返回结果:', result)
+      
+      if (result.status !== 'success') {
+        const error = new Error(result.message || '图片生成失败')
+        error.details = result.details || result.error || null
+        throw error
+      }
+      
+      // 根据返回类型处理结果
+      if (result.outputs && result.outputs.length > 0) {
+        // URL类型返回
+        const imageUrl = `${apiUrl}${result.outputs[0]}`
+        console.log('生成的图片URL:', imageUrl)
+        generatedImage.value = imageUrl
+      } else if (result.image && result.image.length > 0) {
+        // Base64类型返回
+        const imageData = result.image[0]
+        console.log('生成的图片类型:', imageData.mime_type)
+        generatedImage.value = `data:${imageData.mime_type};base64,${imageData.image_data}`
+      } else {
+        throw new Error('返回结果格式不正确，缺少图片数据')
+      }
+      
+      // 显示成功提示
+      showToast({
+        message: '图片生成成功',
+        type: 'success'
+      })
+    } catch (requestError) {
+      // 处理网络请求错误
+      console.error('请求失败:', requestError)
+      
+      // 设置错误状态
+      generationError.value = requestError.message || '请求失败'
+      errorDetails.value = requestError.details || (requestError.statusCode ? `状态码: ${requestError.statusCode}` : null)
+      
+      // 显示错误信息
+      showErrorToast(
+        '请求失败: ' + requestError.message,
+        requestError.details,
+        5000
+      )
+      
+      // 重新抛出错误以在外层处理
+      throw requestError
+    }
+  } catch (error) {
+    console.error('生成图片失败:', error)
+    
+    // 设置错误状态
+    generationError.value = error.message || '生成失败'
+    errorDetails.value = error.details || (error.statusCode ? `状态码: ${error.statusCode}` : null)
+    
+    // 显示错误信息
+    showErrorToast(
+      '生成失败: ' + error.message,
+      error.details || (error.statusCode ? `状态码: ${error.statusCode}` : null),
+      5000
+    )
   } finally {
     isGenerating.value = false
+  }
+}
+
+// 下载生成的图片
+const downloadImage = () => {
+  if (!generatedImage.value) return
+  
+  const link = document.createElement('a')
+  link.href = generatedImage.value
+  link.download = `smartdraw_${Date.now()}.jpg`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+// 分享图片
+const shareImage = async () => {
+  if (!generatedImage.value) return
+
+  // 检查是否支持Web Share API
+  if (navigator.share) {
+    try {
+      // 获取图片blob
+      const response = await fetch(generatedImage.value)
+      const blob = await response.blob()
+      const file = new File([blob], 'smartdraw.jpg', { type: blob.type })
+      
+      await navigator.share({
+        title: '智绘家居创作',
+        text: prompt.value,
+        files: [file]
+      })
+      
+      showToast({ message: '分享成功' })
+    } catch (error) {
+      console.error('分享失败:', error)
+      
+      // 如果是用户取消分享，不显示错误提示
+      if (error.name !== 'AbortError') {
+        showToast({ 
+          message: '分享失败，请尝试保存图片后手动分享',
+          type: 'fail'
+        })
+      }
+    }
+  } else {
+    // 不支持Web Share API的备用方案
+    showToast({ 
+      message: '您的设备不支持直接分享，请下载图片后分享',
+      type: 'fail'
+    })
   }
 }
 
@@ -756,6 +1091,28 @@ const filterCartItems = () => {
     item.name.toLowerCase().includes(query) || 
     (item.description && item.description.toLowerCase().includes(query))
   )
+}
+
+// 处理图片加载错误
+const handleImageError = (event) => {
+  console.error('图片加载失败:', event)
+  
+  // 设置错误状态
+  generationError.value = '图片加载失败，请检查网络连接'
+  errorDetails.value = generatedImage.value ? `图片URL: ${generatedImage.value}` : null
+  
+  showToast({
+    message: '图片加载失败，请检查网络连接',
+    type: 'fail'
+  })
+  
+  // 记录错误的图片URL
+  if (generatedImage.value) {
+    console.error('加载失败的图片URL:', generatedImage.value)
+  }
+  
+  // 清除无法加载的图片
+  generatedImage.value = null
 }
 </script>
 
@@ -1757,5 +2114,186 @@ img {
   .cart-items-list {
     max-height: none;
   }
+}
+
+/* 生成状态指示器 */
+.generating-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #dccfbf;
+  border-bottom-color: var(--primary-color);
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: spinner 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.generating-indicator p {
+  color: var(--primary-color);
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 错误展示样式 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 0 16px;
+  text-align: center;
+}
+
+.error-container i {
+  color: #ff6b6b;
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.error-title {
+  color: #ff6b6b;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.error-message {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.error-details {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 0 16px 0;
+}
+
+.error-details summary {
+  cursor: pointer;
+  color: #666;
+  font-size: 13px;
+  padding: 4px 0;
+  user-select: none;
+  outline: none;
+}
+
+.error-details summary:hover {
+  color: #333;
+}
+
+.details-content {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #666;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 80px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.retry-btn {
+  padding: 8px 20px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+}
+
+.retry-btn:hover {
+  background: #2a1d0f;
+  transform: translateY(-2px);
+}
+
+.retry-btn i {
+  color: white;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* 调试面板样式 */
+.debug-panel {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 300px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.debug-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #ff6b6b;
+}
+
+.debug-label {
+  background: #ff6b6b;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.debug-content {
+  line-height: 1.5;
+}
+
+.debug-content p {
+  margin: 5px 0;
+  word-break: break-word;
+}
+
+.debug-content strong {
+  color: #ff9d9d;
 }
 </style>
