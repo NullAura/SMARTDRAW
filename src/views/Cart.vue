@@ -94,7 +94,7 @@
                   <i class="fas fa-search"></i>
                   <span>找相似</span>
                 </div>
-                <div class="action-btn delete" @click="deleteItem(index)">
+                <div class="action-btn delete" @click="directDeleteItem(index)">
                   <i class="fas fa-trash-alt"></i>
                   <span>删除</span>
                 </div>
@@ -270,25 +270,63 @@ export default {
       
       // 确认删除
       if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
-        // 先添加删除动画类
-        this.$set(this.cartItems[index], 'deleting', true);
-        
-        // 延迟删除，等动画完成
-        setTimeout(() => {
-          // 从购物车中移除商品
+        try {
+          // 标记为删除中状态，用于动画
+          this.$set(this.cartItems[index], 'deleting', true);
+          
+          // 使用setTimeout延迟实际删除，以便动画有时间执行
+          setTimeout(() => {
+            // 直接从数组中移除项目
+            this.cartItems = this.cartItems.filter((_, i) => i !== index);
+            
+            // 直接写入localStorage
+            const dataToSave = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+            localStorage.setItem('cartItems', JSON.stringify(dataToSave));
+            
+            // 手动触发购物车数量更新
+            localStorage.setItem('cartUpdated', Date.now().toString());
+            
+            // 更新总价
+            this.updateTotal();
+            
+            this.$toast.success(`已删除"${removedItem.name}"`);
+          }, 300); // 与CSS动画时间匹配
+        } catch (error) {
+          console.error('删除商品失败:', error);
+          this.$toast.error('删除失败，请重试');
+          
+          // 删除失败恢复状态
+          this.$set(this.cartItems[index], 'deleting', false);
+        }
+      } else {
+        // 取消删除，恢复卡片位置
+        this.cartItems[index].offset = 0;
+      }
+    },
+    
+    // 备用删除方法，不使用动画直接删除
+    directDeleteItem(index) {
+      const removedItem = this.cartItems[index];
+      
+      if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
+        try {
+          // 直接从数组中移除项目
           this.cartItems.splice(index, 1);
           
-          // 保存更新后的购物车
-          this.saveCartData();
+          // 直接写入localStorage
+          localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+          
+          // 手动触发购物车数量更新
+          localStorage.setItem('cartUpdated', Date.now().toString());
           
           // 更新总价
           this.updateTotal();
           
           this.$toast.success(`已删除"${removedItem.name}"`);
-        }, 300);
-      } else {
-        // 如果取消删除，将商品卡片恢复原位
-        this.cartItems[index].offset = 0;
+        } catch (error) {
+          console.error('删除商品失败:', error);
+          this.$toast.error('删除失败，请重试');
+        }
       }
     },
     goBack() {
@@ -351,24 +389,52 @@ export default {
     },
     // 从localStorage获取购物车数据
     getCartData() {
-      const cartData = localStorage.getItem('cartItems');
-      if (cartData) {
-        // 解析购物车数据，并为每个商品添加offset属性用于左滑效果
-        const parsedData = JSON.parse(cartData);
-        this.cartItems = parsedData.map(item => ({
-          ...item,
-          offset: 0 // 添加offset属性，初始值为0
-        }));
+      try {
+        const cartData = localStorage.getItem('cartItems');
+        if (cartData) {
+          // 解析购物车数据，并为每个商品添加offset属性用于左滑效果
+          let parsedData = [];
+          try {
+            parsedData = JSON.parse(cartData);
+            // 确保解析结果是数组
+            if (!Array.isArray(parsedData)) {
+              console.error("购物车数据不是有效的数组格式");
+              parsedData = [];
+            }
+          } catch (e) {
+            console.error("购物车数据解析失败", e);
+            parsedData = [];
+          }
+          
+          // 为每个商品添加必要的UI属性
+          this.cartItems = parsedData.map(item => ({
+            ...item,
+            offset: 0, // 初始左滑偏移量为0
+            deleting: false, // 初始删除状态为false
+            // 确保数量是有效数字
+            quantity: typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1,
+            // 确保选中状态是布尔值
+            selected: typeof item.selected === 'boolean' ? item.selected : true
+          }));
+        }
+        this.updateTotal();
+      } catch (error) {
+        console.error('获取购物车数据时出错:', error);
+        this.cartItems = [];
+        this.updateTotal();
       }
-      this.updateTotal();
     },
     // 保存购物车数据到localStorage
     saveCartData() {
-      // 在保存前去除offset属性
-      const dataToSave = this.cartItems.map(({ offset, ...item }) => item);
-      localStorage.setItem('cartItems', JSON.stringify(dataToSave));
-      // 触发购物车更新事件
-      localStorage.setItem('cartUpdated', Date.now().toString());
+      try {
+        // 在保存前去除UI相关属性
+        const dataToSave = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+        localStorage.setItem('cartItems', JSON.stringify(dataToSave));
+        // 触发购物车更新事件
+        localStorage.setItem('cartUpdated', Date.now().toString());
+      } catch (error) {
+        console.error('保存购物车数据时出错:', error);
+      }
     }
   },
   created() {
@@ -376,8 +442,11 @@ export default {
   },
   watch: {
     cartItems: {
-      handler() {
-        this.saveCartData();
+      handler(newItems) {
+        // 只有当数组中没有正在删除的项目时才保存
+        if (!newItems.some(item => item.deleting)) {
+          this.saveCartData();
+        }
       },
       deep: true
     }
@@ -549,6 +618,8 @@ export default {
 .cart-item-wrapper {
   position: relative;
   overflow: hidden;
+  margin-bottom: 1px;
+  transition: height 0.3s ease;
 }
 
 .cart-item {
@@ -558,15 +629,15 @@ export default {
   background: #fff;
   position: relative;
   z-index: 2;
-  transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
+  transform-origin: center;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   width: 100%;
+  will-change: transform, opacity;
 }
 
 .cart-item.deleting {
   opacity: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
+  transform: translateX(-100%);
 }
 
 .item-actions {
