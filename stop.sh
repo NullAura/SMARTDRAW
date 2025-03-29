@@ -25,6 +25,20 @@ echo -e "${BLUE}正在停止 SmartDraw 服务...${NC}"
 echo -e "${BLUE}正在停止 MongoDB...${NC}"
 $STOP_MONGODB
 
+# 查找并停止由start.sh启动的所有进程
+echo -e "${BLUE}正在停止由start.sh启动的所有进程...${NC}"
+pids=$(ps -ef | grep -E "start\.sh|通过start\.sh启动" | grep -v grep | awk '{print $2}')
+if [ -n "$pids" ]; then
+    echo -e "${BLUE}找到进程ID: $pids${NC}"
+    for pid in $pids; do
+        echo -e "${BLUE}正在终止进程 $pid${NC}"
+        kill -9 $pid 2>/dev/null
+    done
+fi
+
+# 查找并停止由start.sh可能启动的子进程
+echo -e "${BLUE}正在停止由start.sh启动的子进程...${NC}"
+
 # 查找并停止 Node.js 进程
 echo -e "${BLUE}正在停止 Node.js 服务...${NC}"
 pkill -f "node.*vite"
