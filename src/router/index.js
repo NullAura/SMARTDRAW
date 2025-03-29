@@ -7,6 +7,7 @@ import Register from '@/views/Register.vue'
 import User from '@/views/User.vue'
 import Store from '@/views/Store.vue'
 import Community from '@/views/Community.vue'
+import ProductList from '@/views/ProductList.vue'
 
 const routes = [
   { 
@@ -44,6 +45,12 @@ const routes = [
         path: 'community', 
         component: Community, 
         meta: { requiresAuth: true } 
+      },
+      {
+        path: 'products/:category',
+        name: 'ProductList',
+        component: ProductList,
+        meta: { requiresAuth: true }
       }
     ]
   }

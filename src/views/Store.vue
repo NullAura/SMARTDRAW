@@ -35,16 +35,16 @@
       <section id="hot" class="hot-categories" ref="hot">
         <h2>热门</h2>
         <div class="category-grid">
-          <div class="category-item">
-            <img src="@/assets/images/kids.jpg" alt="儿童">
+          <div class="category-item" @click="goToProductList('儿童')">
+            <div class="placeholder-image">儿</div>
             <h3>儿童</h3>
           </div>
-          <div class="category-item">
-            <img src="@/assets/images/bedding.jpg" alt="床上用品">
+          <div class="category-item" @click="goToProductList('床上用品')">
+            <div class="placeholder-image">床</div>
             <h3>床上用品</h3>
           </div>
-          <div class="category-item">
-            <img src="@/assets/images/sofa.jpg" alt="沙发">
+          <div class="category-item" @click="goToProductList('沙发')">
+            <div class="placeholder-image">沙</div>
             <h3>沙发</h3>
           </div>
         </div>
@@ -57,17 +57,17 @@
           <a href="#" class="view-all">全部</a>
         </div>
         <div class="collections-grid">
-          <div class="collection-item">
-            <img src="@/assets/images/must-buy.png" alt="必买清单">
+          <div class="collection-item" @click="goToProductList('必买清单')">
+            <div class="placeholder-image">必</div>
           </div>
-          <div class="collection-item">
-            <img src="@/assets/images/work-essentials.png" alt="打工人必备">
+          <div class="collection-item" @click="goToProductList('打工人必备')">
+            <div class="placeholder-image">打</div>
           </div>
-          <div class="collection-item">
-            <img src="@/assets/images/home-games.png" alt="宅家游戏">
+          <div class="collection-item" @click="goToProductList('宅家游戏')">
+            <div class="placeholder-image">宅</div>
           </div>
-          <div class="collection-item">
-            <img src="@/assets/images/study.png" alt="学有所成">
+          <div class="collection-item" @click="goToProductList('学有所成')">
+            <div class="placeholder-image">学</div>
           </div>
         </div>
       </section>
@@ -76,45 +76,102 @@
       <section id="storage" class="category-section" ref="storage">
         <h2>储物和收纳</h2>
         <div class="category-grid">
-          <!-- 示例内容 -->
+          <div class="category-item" @click="goToProductList('储物和收纳')">
+            <div class="placeholder-image">储</div>
+            <h3>查看全部</h3>
+          </div>
         </div>
       </section>
 
       <!-- 其他分类区域 -->
       <section id="sofa" class="category-section" ref="sofa">
         <h2>沙发和扶手椅</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('沙发和扶手椅')">
+            <div class="placeholder-image">沙</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="bed" class="category-section" ref="bed">
         <h2>床和床垫</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('床和床垫')">
+            <div class="placeholder-image">床</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="textile" class="category-section" ref="textile">
         <h2>纺织品</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('纺织品')">
+            <div class="placeholder-image">纺</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="dining" class="category-section" ref="dining">
         <h2>餐桌和餐椅</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('餐桌和餐椅')">
+            <div class="placeholder-image">餐</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="kitchenware" class="category-section" ref="kitchenware">
         <h2>餐具和厨具</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('餐具和厨具')">
+            <div class="placeholder-image">厨</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="cleaning" class="category-section" ref="cleaning">
         <h2>清洁及晾晒用品</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('清洁及晾晒用品')">
+            <div class="placeholder-image">清</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="desk" class="category-section" ref="desk">
         <h2>书桌和书桌椅</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('书桌和书桌椅')">
+            <div class="placeholder-image">书</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="bathroom" class="category-section" ref="bathroom">
         <h2>浴室家具和收纳</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('浴室家具和收纳')">
+            <div class="placeholder-image">浴</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
 
       <section id="outdoor" class="category-section" ref="outdoor">
         <h2>户外产品</h2>
+        <div class="category-grid">
+          <div class="category-item" @click="goToProductList('户外产品')">
+            <div class="placeholder-image">户</div>
+            <h3>查看全部</h3>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -169,6 +226,12 @@ export default {
           behavior: 'smooth'
         });
       }
+    },
+    goToProductList(category) {
+      this.$router.push({ 
+        name: 'ProductList', 
+        params: { category: encodeURIComponent(category) } 
+      });
     }
   },
   mounted() {
@@ -293,12 +356,15 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.category-item img, .collection-item img {
+.placeholder-image {
   width: 100%;
   height: 180px;
-  object-fit: contain;
-  background: white;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #bbb;
+  background-color: #f0f0f0;
 }
 
 .category-item h3, .collection-item h3 {
