@@ -247,7 +247,7 @@ export default {
       productId: '',
       product: {},
       isCollected: false,
-      cartCount: 2,
+      cartCount: 0,
       // 模拟商品数据
       productData: [
         {
