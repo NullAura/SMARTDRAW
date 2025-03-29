@@ -90,11 +90,11 @@
               </div>
               <!-- 左滑显示的操作按钮 -->
               <div class="item-actions">
-                <div class="action-btn find-similar" @click="findSimilar(item)">
+                <div class="action-btn find-similar" @click.stop="findSimilar(item)">
                   <i class="fas fa-search"></i>
                   <span>找相似</span>
                 </div>
-                <div class="action-btn delete" @click="directDeleteItem(index)">
+                <div class="action-btn delete" @click.stop="directDeleteItem(index)">
                   <i class="fas fa-trash-alt"></i>
                   <span>删除</span>
                 </div>
@@ -209,11 +209,15 @@ export default {
   methods: {
     // 触摸事件相关方法
     touchStart(event, index) {
+      // 防止点击事件冒泡
+      event.stopPropagation();
+      
+      // 记录触摸起始位置和当前操作的商品索引
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;
       this.currentIndex = index;
       
-      // 重置其他项的偏移
+      // 重置所有其他商品的左滑状态
       this.cartItems.forEach((item, idx) => {
         if (idx !== index) {
           item.offset = 0;
@@ -306,27 +310,45 @@ export default {
     
     // 备用删除方法，不使用动画直接删除
     directDeleteItem(index) {
-      const removedItem = this.cartItems[index];
-      
-      if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
-        try {
-          // 直接从数组中移除项目
-          this.cartItems.splice(index, 1);
+      try {
+        // 防止无效索引
+        if (index < 0 || index >= this.cartItems.length) {
+          console.error('删除商品失败: 无效的索引', index);
+          this.$toast.error('删除失败，请刷新页面重试');
+          return;
+        }
+
+        const removedItem = this.cartItems[index];
+        
+        // 确认删除
+        if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
+          // 先取消任何可能的左滑状态
+          this.cartItems.forEach(item => item.offset = 0);
           
-          // 直接写入localStorage
-          localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+          // 克隆数组，避免直接修改原数组
+          const updatedItems = [...this.cartItems];
           
-          // 手动触发购物车数量更新
+          // 从数组中移除该项
+          updatedItems.splice(index, 1);
+          
+          // 更新购物车数组
+          this.cartItems = updatedItems;
+          
+          // 移除offset等UI属性并保存到localStorage
+          const cleanItems = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+          localStorage.setItem('cartItems', JSON.stringify(cleanItems));
+          
+          // 触发更新事件
           localStorage.setItem('cartUpdated', Date.now().toString());
           
           // 更新总价
           this.updateTotal();
           
           this.$toast.success(`已删除"${removedItem.name}"`);
-        } catch (error) {
-          console.error('删除商品失败:', error);
-          this.$toast.error('删除失败，请重试');
         }
+      } catch (error) {
+        console.error('删除商品失败:', error);
+        this.$toast.error('删除失败，请刷新页面重试');
       }
     },
     goBack() {
@@ -391,49 +413,88 @@ export default {
     getCartData() {
       try {
         const cartData = localStorage.getItem('cartItems');
-        if (cartData) {
-          // 解析购物车数据，并为每个商品添加offset属性用于左滑效果
-          let parsedData = [];
-          try {
-            parsedData = JSON.parse(cartData);
-            // 确保解析结果是数组
-            if (!Array.isArray(parsedData)) {
-              console.error("购物车数据不是有效的数组格式");
-              parsedData = [];
-            }
-          } catch (e) {
-            console.error("购物车数据解析失败", e);
-            parsedData = [];
-          }
-          
-          // 为每个商品添加必要的UI属性
-          this.cartItems = parsedData.map(item => ({
-            ...item,
-            offset: 0, // 初始左滑偏移量为0
-            deleting: false, // 初始删除状态为false
-            // 确保数量是有效数字
-            quantity: typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1,
-            // 确保选中状态是布尔值
-            selected: typeof item.selected === 'boolean' ? item.selected : true
-          }));
+        
+        // 如果没有购物车数据，初始化为空数组
+        if (!cartData) {
+          this.cartItems = [];
+          return;
         }
-        this.updateTotal();
+        
+        // 尝试解析购物车数据
+        let parsedData = [];
+        try {
+          parsedData = JSON.parse(cartData);
+          
+          // 确保解析结果是数组
+          if (!Array.isArray(parsedData)) {
+            console.error("购物车数据不是有效的数组格式，重置为空数组");
+            parsedData = [];
+            localStorage.setItem('cartItems', JSON.stringify([]));
+          }
+        } catch (e) {
+          console.error("购物车数据解析失败，重置为空数组", e);
+          parsedData = [];
+          localStorage.setItem('cartItems', JSON.stringify([]));
+        }
+        
+        // 过滤掉无效数据，确保每个商品都有必要的字段
+        parsedData = parsedData.filter(item => 
+          item && 
+          typeof item === 'object' && 
+          item.id && 
+          item.name && 
+          item.price
+        );
+        
+        // 为每个商品添加必要的UI属性
+        this.cartItems = parsedData.map(item => ({
+          ...item,
+          offset: 0, // 初始左滑偏移量为0
+          deleting: false, // 初始删除状态为false
+          // 确保数量是有效数字
+          quantity: typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1,
+          // 确保选中状态是布尔值
+          selected: typeof item.selected === 'boolean' ? item.selected : true
+        }));
+        
       } catch (error) {
-        console.error('获取购物车数据时出错:', error);
+        console.error('获取购物车数据时出错，重置为空购物车:', error);
         this.cartItems = [];
+        localStorage.setItem('cartItems', JSON.stringify([]));
+      } finally {
+        // 无论如何都更新总价
         this.updateTotal();
       }
     },
+    
     // 保存购物车数据到localStorage
     saveCartData() {
       try {
+        // 过滤掉可能的无效数据
+        const validItems = this.cartItems.filter(item => 
+          item && 
+          typeof item === 'object' && 
+          item.id && 
+          item.name && 
+          item.price
+        );
+        
         // 在保存前去除UI相关属性
-        const dataToSave = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+        const dataToSave = validItems.map(({ offset, deleting, height, ...item }) => item);
+        
+        // 保存到localStorage
         localStorage.setItem('cartItems', JSON.stringify(dataToSave));
+        
         // 触发购物车更新事件
         localStorage.setItem('cartUpdated', Date.now().toString());
       } catch (error) {
         console.error('保存购物车数据时出错:', error);
+        // 尝试保存一个空数组作为恢复
+        try {
+          localStorage.setItem('cartItems', JSON.stringify([]));
+        } catch (e) {
+          console.error('恢复空购物车失败:', e);
+        }
       }
     }
   },
