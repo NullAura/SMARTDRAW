@@ -3,6 +3,7 @@
 # 颜色定义
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
 NC='\033[0m'
 
 # 检测操作系统
@@ -20,11 +21,23 @@ fi
 # 获取脚本所在目录的绝对路径
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# 获取服务器 IP 地址
+# 获取服务器本地 IP 地址
 if [ "$OS_TYPE" = "macos" ]; then
-    SERVER_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
+    LOCAL_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
 else
-    SERVER_IP=$(hostname -I | awk '{print $1}')
+    LOCAL_IP=$(hostname -I | awk '{print $1}')
+fi
+
+# 获取公网 IP 地址
+echo -e "${BLUE}正在获取公网 IP 地址...${NC}"
+PUBLIC_IP=$(curl -s https://api.ipify.org || curl -s https://ipinfo.io/ip || curl -s https://icanhazip.com)
+
+if [ -z "$PUBLIC_IP" ]; then
+    echo -e "${YELLOW}无法获取公网 IP 地址，将使用本地 IP 地址${NC}"
+    SERVER_IP=$LOCAL_IP
+else
+    SERVER_IP=$PUBLIC_IP
+    echo -e "${GREEN}已获取公网 IP 地址: $PUBLIC_IP${NC}"
 fi
 
 # 创建日志目录
@@ -71,6 +84,8 @@ fi
 
 # 设置环境变量
 export SERVER_IP
+export LOCAL_IP
+export PUBLIC_IP
 
 # 启动后端服务器
 log "正在启动后端服务器..."
@@ -90,8 +105,14 @@ sleep 2
 
 # 打印成功信息
 log "SmartDraw 项目已启动！"
-log "前端地址: http://$SERVER_IP:5173"
-log "后端地址: http://$SERVER_IP:3000"
+echo -e "${GREEN}====================================${NC}"
+log "本地地址: http://$LOCAL_IP:5173"
+if [ "$SERVER_IP" != "$LOCAL_IP" ]; then
+    log "公网地址: http://$PUBLIC_IP:5173"
+    echo -e "${YELLOW}注意: 若要从外部访问，请确保端口5173和3000已在防火墙中开放${NC}"
+fi
+log "后端地址: http://$LOCAL_IP:3000"
+echo -e "${GREEN}====================================${NC}"
 log "查看日志: tail -f $LOG_FILE"
 
 # 等待用户中断
