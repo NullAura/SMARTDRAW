@@ -781,6 +781,59 @@ const selectCartItem = async (item) => {
     })
     
     try {
+      // 如果商品已有图片URL，则直接使用
+      if (item.imageUrl) {
+        console.log('使用现有商品图片URL:', item.imageUrl)
+        
+        try {
+          // 从URL加载图片
+          const response = await fetch(item.imageUrl)
+          const blob = await response.blob()
+          const file = new File([blob], `${item.name}.jpg`, { type: 'image/jpeg' })
+          
+          // 创建缩略图
+          const processed = {
+            file,
+            preview: item.imageUrl,
+            dimensions: { width: 400, height: 400 },
+            productInfo: { ...item }
+          }
+          
+          // 设置为替换家具图片
+          replaceImages.value = replaceImages.value.map((img, idx) => 
+            idx === 1 ? processed : img
+          )
+          
+          loadingToast.close()
+          showToast({
+            message: `已选择 ${item.name}`,
+            position: 'bottom'
+          })
+          
+          closeCartSelect()
+          
+          if (replaceImages.value[0] !== null) {
+            setTimeout(() => {
+              showToast({
+                message: '家具替换准备就绪，可以点击"立即生成"',
+                position: 'bottom'
+              })
+            }, 1000)
+          } else {
+            setTimeout(() => {
+              showToast({
+                message: '请上传原始家居图片',
+                position: 'bottom'
+              })
+            }, 1000)
+          }
+          
+          return
+        } catch (imgError) {
+          console.error('加载现有图片URL失败，将创建替代图像:', imgError)
+        }
+      }
+      
       // 模拟创建图像数据
       const placeholderCanvas = document.createElement('canvas')
       const ctx = placeholderCanvas.getContext('2d')
