@@ -15,11 +15,13 @@
     <!-- 商品图片展示 -->
     <div class="product-gallery">
       <div class="main-image">
-        <div class="placeholder-image">{{ product.name ? product.name.charAt(0) : '图' }}</div>
+        <img v-if="product.imageUrl" :src="product.imageUrl" alt="产品图片" class="product-img"/>
+        <div v-else class="placeholder-image">{{ product.name ? product.name.charAt(0) : '图' }}</div>
       </div>
       <div class="thumbnail-list">
         <div class="thumbnail active">
-          <div class="placeholder-image-small">{{ product.name ? product.name.charAt(0) : '图' }}</div>
+          <img v-if="product.imageUrl" :src="product.imageUrl" alt="产品缩略图" class="thumbnail-img"/>
+          <div v-else class="placeholder-image-small">{{ product.name ? product.name.charAt(0) : '图' }}</div>
         </div>
         <div class="thumbnail">
           <div class="placeholder-image-small">2</div>
@@ -240,6 +242,9 @@
 </template>
 
 <script>
+// 导入沙发图片
+import sofa1Image from '@/assets/images/sofa1.png'
+
 export default {
   name: 'ProductDetail',
   data() {
@@ -248,6 +253,8 @@ export default {
       product: {},
       isCollected: false,
       cartCount: 0,
+      // 图片资源
+      sofa1Image,
       // 模拟商品数据
       productData: [
         {
@@ -287,6 +294,26 @@ export default {
           material: 'ABS塑料',
           color: '多色',
           origin: '丹麦'
+        },
+        {
+          id: '3',
+          name: 'KIVIK 希维克',
+          description: '三人沙发, 布罗福尔斯 灰色',
+          price: '3999',
+          priceDecimal: '00',
+          originalPrice: '4699.00',
+          tag: '特惠',
+          subInfo: '舒适耐用的宽敞沙发',
+          monthlySales: '200+',
+          reviewCount: '850+',
+          goodRate: '96',
+          sampleReview: '沙发质感超赞，颜色和图片一致，坐上去很舒适，客厅大小正合适！',
+          features: '这款希维克三人沙发采用灰色布罗福尔斯面料，质感丰富且耐用。宽大的扶手和柔软的靠垫提供了极佳的舒适感。沙发框架结实耐用，使用高弹力泡沫填充，保证长时间使用仍保持舒适。沙发套可拆卸清洗，让您的家居始终保持干净整洁。',
+          size: '228x95x83 厘米',
+          material: '高弹力泡沫, 布罗福尔斯面料',
+          color: '灰色',
+          origin: '瑞典',
+          imageUrl: sofa1Image
         }
       ]
     };
@@ -423,6 +450,13 @@ export default {
   position: relative;
 }
 
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #fff;
+}
+
 .placeholder-image {
   width: 100%;
   height: 100%;
@@ -452,6 +486,12 @@ export default {
 
 .thumbnail.active {
   border: 2px solid #ff5000;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .placeholder-image-small {

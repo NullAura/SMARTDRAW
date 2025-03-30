@@ -104,9 +104,17 @@
       <section id="sofa" class="category-section" ref="sofa">
         <h2>沙发和扶手椅</h2>
         <div class="category-grid">
-          <div class="category-item" @click="goToProductList('沙发和扶手椅')">
-            <div class="placeholder-image">沙</div>
+          <div class="category-item" @click="goToProductList('沙发')">
+            <div class="category-image">
+              <img :src="sofaImage" alt="沙发" />
+            </div>
             <h3>查看全部</h3>
+          </div>
+          <div class="category-item" @click="goToProductDetail('3')">
+            <div class="category-image">
+              <img src="@/assets/images/sofa1.png" alt="希维克沙发" />
+            </div>
+            <h3>KIVIK 希维克</h3>
           </div>
         </div>
       </section>
@@ -266,6 +274,12 @@ export default {
       this.$router.push({ 
         name: 'ProductList', 
         params: { category: encodeURIComponent(category) } 
+      });
+    },
+    goToProductDetail(productId) {
+      this.$router.push({
+        name: 'ProductDetail',
+        params: { id: productId }
       });
     },
     goToCart() {

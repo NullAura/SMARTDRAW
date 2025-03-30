@@ -41,7 +41,8 @@
         @click="goToProductDetail(product.id)"
       >
         <div class="product-image">
-          <div class="placeholder-image">{{ product.name.charAt(0) }}</div>
+          <img v-if="product.imageUrl" :src="product.imageUrl" alt="商品图片" class="product-img"/>
+          <div v-else class="placeholder-image">{{ product.name.charAt(0) }}</div>
           <div v-if="product.tag" class="product-tag">{{ product.tag }}</div>
         </div>
         <div class="product-info">
@@ -56,6 +57,9 @@
 </template>
 
 <script>
+// 导入沙发图片
+import sofa1Image from '@/assets/images/sofa1.png'
+
 export default {
   name: 'ProductList',
   data() {
@@ -82,11 +86,14 @@ export default {
         },
         {
           id: '3',
-          name: 'TROFAST 舒法特',
-          description: '储物组合带盒, 99x44x52 厘米',
-          price: '697',
-          priceDecimal: '40',
-          tag: '新品'
+          name: 'KIVIK 奇维',
+          description: '二人沙发, 布罗福尔斯 灰色',
+          price: '1999',
+          priceDecimal: '00',
+          tag: '特惠',
+          subInfo: '舒适耐用的宽敞沙发',
+          category: '沙发',
+          imageUrl: sofa1Image
         },
         {
           id: '4',
@@ -114,8 +121,15 @@ export default {
   },
   computed: {
     filteredProducts() {
-      // 这里可以根据分类和筛选条件过滤商品
-      // 目前先返回所有商品
+      // 根据路由参数进行筛选
+      if (this.categoryName && this.categoryName !== '全部') {
+        return this.products.filter(product => 
+          product.category === this.categoryName || 
+          product.name.includes(this.categoryName) || 
+          product.description.includes(this.categoryName)
+        );
+      }
+      // 返回所有商品
       return this.products;
     }
   },
@@ -233,6 +247,12 @@ export default {
   background-color: #f5f5f5;
 }
 
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .placeholder-image {
   width: 100%;
   height: 100%;
@@ -248,34 +268,35 @@ export default {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #e41e3f;
+  padding: 2px 6px;
+  background-color: #ff5000;
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
   font-size: 12px;
-  font-weight: bold;
+  border-radius: 4px;
 }
 
 .product-info {
-  padding: 12px;
+  padding: 10px;
 }
 
 .product-name {
+  margin: 0 0 5px;
+  font-size: 14px;
   font-weight: bold;
-  margin-bottom: 4px;
-  font-size: 16px;
+  color: #333;
 }
 
 .product-description {
+  margin: 0 0 8px;
+  font-size: 12px;
   color: #666;
-  margin-bottom: 8px;
-  font-size: 14px;
 }
 
 .product-price {
-  font-weight: bold;
-  margin-bottom: 4px;
+  margin: 0 0 5px;
   font-size: 16px;
+  font-weight: bold;
+  color: #ff5000;
 }
 
 .price-decimal {
@@ -283,7 +304,8 @@ export default {
 }
 
 .product-subinfo {
-  color: #888;
-  font-size: 13px;
+  margin: 0;
+  font-size: 12px;
+  color: #999;
 }
 </style> 
