@@ -460,9 +460,19 @@ const generateImage = async () => {
           });
         }, 30000); // 30秒超时
         
+        // 显示预加载提示
+        const preloadToast = showLoadingToast({
+          message: '正在加载图片...',
+          forbidClick: true,
+          duration: 0
+        });
+        
         // 定义加载成功处理
         img.onload = function() {
           clearTimeout(imgLoadTimeout);
+          // 关闭预加载提示
+          preloadToast.close();
+          
           console.log('图片预加载成功！尺寸:', img.width, 'x', img.height);
           generatedImage.value = imageUrl;
           
@@ -493,23 +503,21 @@ const generateImage = async () => {
         // 定义加载失败处理
         img.onerror = function(err) {
           clearTimeout(imgLoadTimeout);
+          // 关闭预加载提示
+          preloadToast.close();
+          
           console.error('图片预加载失败:', err);
           console.error('失败URL:', imageUrl);
           
-          // 记录错误详情
-          try {
-            // 尝试验证URL是否可访问
-            fetch(imageUrl, { method: 'HEAD' })
-              .then(response => {
-                console.log('URL可访问性检查:', response.status, response.statusText);
-                console.log('Content-Type:', response.headers.get('Content-Type'));
-              })
-              .catch(fetchErr => {
-                console.error('URL不可访问:', fetchErr);
-              });
-          } catch (verifyError) {
-            console.error('验证URL时出错:', verifyError);
-          }
+          // 尝试验证URL是否可访问
+          fetch(imageUrl, { method: 'HEAD' })
+            .then(response => {
+              console.log('URL可访问性检查:', response.status, response.statusText);
+              console.log('Content-Type:', response.headers.get('Content-Type'));
+            })
+            .catch(fetchErr => {
+              console.error('URL不可访问:', fetchErr);
+            });
           
           // 尝试显示错误图片
           showToast({
