@@ -244,6 +244,8 @@
 <script>
 // 导入沙发图片
 import sofa1Image from '@/assets/images/sofa1.png'
+import { showToast } from 'vant'
+import 'vant/es/toast/style'
 
 export default {
   name: 'ProductDetail',
@@ -325,9 +327,17 @@ export default {
     toggleCollect() {
       this.isCollected = !this.isCollected;
       if (this.isCollected) {
-        this.$toast.success('收藏成功');
+        showToast({
+          message: '收藏成功',
+          type: 'success',
+          position: 'bottom'
+        });
       } else {
-        this.$toast.info('已取消收藏');
+        showToast({
+          message: '已取消收藏',
+          type: 'default',
+          position: 'bottom'
+        });
       }
     },
     addToCart() {
@@ -354,7 +364,8 @@ export default {
           price: this.product.price,
           priceDecimal: this.product.priceDecimal,
           quantity: 1,
-          selected: true
+          selected: true,
+          imageUrl: this.product.imageUrl
         });
       }
       
@@ -365,10 +376,13 @@ export default {
       this.cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
       
       // 创建一个自定义事件来更新其他页面的购物车数量
-      // 这里使用localStorage事件触发，但需要触发一个特定的存储事件
       localStorage.setItem('cartUpdated', Date.now().toString());
       
-      this.$toast.success('已加入购物车');
+      showToast({
+        message: '已加入购物车',
+        type: 'success',
+        position: 'bottom'
+      });
     },
     buyNow() {
       this.addToCart();

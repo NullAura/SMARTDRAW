@@ -67,7 +67,8 @@
                   <input type="checkbox" v-model="item.selected" @change="updateTotal">
                 </div>
                 <div class="item-image" @click="goToProductDetail(item.id)">
-                  <div class="placeholder-image">{{ item.name.charAt(0) }}</div>
+                  <img v-if="item.imageUrl" :src="item.imageUrl" alt="商品图片" class="item-img"/>
+                  <div v-else class="placeholder-image">{{ item.name.charAt(0) }}</div>
                 </div>
                 <div class="item-info">
                   <div class="item-name" @click="goToProductDetail(item.id)">{{ item.name }} {{ item.description }}</div>
@@ -151,6 +152,9 @@
 </template>
 
 <script>
+import { showToast } from 'vant'
+import 'vant/es/toast/style'
+
 export default {
   name: 'Cart',
   data() {
@@ -262,7 +266,10 @@ export default {
       this.currentIndex = -1;
     },
     findSimilar(item) {
-      this.$toast.info(`正在查找与"${item.name}"相似的商品`);
+      showToast({
+        message: `正在查找与"${item.name}"相似的商品`,
+        position: 'bottom'
+      });
       // 这里可以跳转到相似商品页面
       this.$router.push({
         name: 'ProductList',
@@ -293,11 +300,17 @@ export default {
             // 更新总价
             this.updateTotal();
             
-            this.$toast.success(`已删除"${removedItem.name}"`);
+            showToast({
+              message: `已删除"${removedItem.name}"`,
+              type: 'success'
+            });
           }, 300); // 与CSS动画时间匹配
         } catch (error) {
           console.error('删除商品失败:', error);
-          this.$toast.error('删除失败，请重试');
+          showToast({
+            message: '删除失败，请重试',
+            type: 'fail'
+          });
           
           // 删除失败恢复状态
           this.$set(this.cartItems[index], 'deleting', false);
@@ -314,7 +327,10 @@ export default {
         // 防止无效索引
         if (index < 0 || index >= this.cartItems.length) {
           console.error('删除商品失败: 无效的索引', index);
-          this.$toast.error('删除失败，请刷新页面重试');
+          showToast({
+            message: '删除失败，请刷新页面重试',
+            type: 'fail'
+          });
           return;
         }
 
@@ -344,11 +360,17 @@ export default {
           // 更新总价
           this.updateTotal();
           
-          this.$toast.success(`已删除"${removedItem.name}"`);
+          showToast({
+            message: `已删除"${removedItem.name}"`,
+            type: 'success'
+          });
         }
       } catch (error) {
         console.error('删除商品失败:', error);
-        this.$toast.error('删除失败，请刷新页面重试');
+        showToast({
+          message: '删除失败，请刷新页面重试',
+          type: 'fail'
+        });
       }
     },
     goBack() {
@@ -403,10 +425,16 @@ export default {
     },
     checkout() {
       if (this.totalItems > 0) {
-        this.$toast.info('即将跳转到结算页面');
+        showToast({
+          message: '即将跳转到结算页面',
+          position: 'bottom'
+        });
         // 跳转到结算页面的逻辑
       } else {
-        this.$toast.error('请至少选择一件商品');
+        showToast({
+          message: '请至少选择一件商品',
+          type: 'fail'
+        });
       }
     },
     // 从localStorage获取购物车数据
@@ -517,7 +545,7 @@ export default {
 
 <style scoped>
 .cart-container {
-  background-color: #f5f5f5;
+  background-color: #f9f9f9;
   min-height: 100vh;
   padding-bottom: 60px;
 }
@@ -531,42 +559,44 @@ export default {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .back-btn {
   font-size: 18px;
   cursor: pointer;
-  width: 30px;
+  width: 40px;
 }
 
 .nav-title {
   font-size: 18px;
   font-weight: bold;
+  flex-grow: 1;
+  text-align: center;
 }
 
 .nav-icons {
   display: flex;
   gap: 20px;
   font-size: 18px;
+  width: 40px;
+  justify-content: flex-end;
+}
+
+.cart-list {
+  padding-bottom: 60px;
 }
 
 .empty-cart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  background: #fff;
-  margin: 15px;
-  border-radius: 8px;
+  padding: 40px 0;
+  text-align: center;
+  color: #999;
 }
 
 .empty-image {
   width: 120px;
   height: 120px;
-  margin-bottom: 20px;
-  position: relative;
+  margin: 0 auto 20px;
 }
 
 .placeholder-empty-cart {
@@ -576,176 +606,119 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
 }
 
 .cart-icon {
-  width: 70px;
-  height: 70px;
-  background: #f5f5f5;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ccc;
-  font-size: 32px;
-  margin-bottom: 10px;
+  font-size: 40px;
+  color: #ddd;
 }
 
 .empty-dots {
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .dot {
   width: 8px;
   height: 8px;
-  background-color: #f0f0f0;
+  background-color: #ddd;
   border-radius: 50%;
 }
 
-.empty-icon {
-  font-size: 40px;
-  color: #ccc;
-  margin-bottom: 20px;
-}
-
-.empty-cart p {
-  color: #999;
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
 .empty-tips {
+  font-size: 14px;
+  margin-top: 8px;
   color: #bbb;
-  font-size: 14px !important;
-  margin-bottom: 20px !important;
 }
 
 .go-shopping-btn {
-  background: #ff5000;
+  margin-top: 20px;
+  padding: 10px 24px;
+  background-color: #ff5000;
   color: white;
   border: none;
-  padding: 10px 20px;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
 }
 
 .shop-group {
   background: #fff;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .shop-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #f5f5f5;
 }
 
 .shop-select {
   display: flex;
   align-items: center;
-}
-
-.shop-select input[type="checkbox"] {
-  margin-right: 10px;
+  gap: 12px;
 }
 
 .shop-info {
   display: flex;
   align-items: center;
-}
-
-.shop-info i {
-  margin-right: 5px;
+  gap: 8px;
+  font-size: 14px;
 }
 
 .shop-name {
   font-weight: bold;
-  font-size: 14px;
 }
 
 .shop-actions {
+  font-size: 14px;
   color: #ff5000;
-  font-size: 13px;
 }
 
 .cart-items {
-  padding: 0 15px;
+  padding: 0 16px;
 }
 
 .cart-item-wrapper {
   position: relative;
   overflow: hidden;
-  margin-bottom: 1px;
-  transition: height 0.3s ease;
 }
 
 .cart-item {
   display: flex;
-  padding: 15px 0;
+  padding: 16px 0;
   border-bottom: 1px solid #f5f5f5;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
   background: #fff;
-  position: relative;
   z-index: 2;
-  transform-origin: center;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  will-change: transform;
+  position: relative;
   width: 100%;
-  will-change: transform, opacity;
-}
-
-.cart-item.deleting {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-
-.item-actions {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  display: flex;
-  align-items: stretch;
-  z-index: 1;
-}
-
-.action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  padding: 0 20px;
-  font-size: 12px;
-}
-
-.action-btn i {
-  font-size: 18px;
-  margin-bottom: 4px;
-}
-
-.find-similar {
-  background-color: #ff9000;
-}
-
-.delete {
-  background-color: #ff3b30;
 }
 
 .item-select {
+  padding-right: 16px;
   display: flex;
   align-items: center;
-  padding-right: 10px;
 }
 
 .item-image {
   width: 80px;
   height: 80px;
-  margin-right: 10px;
-  border-radius: 4px;
+  margin-right: 16px;
+  border-radius: 8px;
   overflow: hidden;
+}
+
+.item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .placeholder-image {
@@ -754,7 +727,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 32px;
   color: #bbb;
   background-color: #f0f0f0;
 }
@@ -942,5 +915,39 @@ export default {
   font-weight: bold;
   cursor: pointer;
   text-align: center;
+}
+
+.item-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  z-index: 1;
+  width: 160px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0 20px;
+  font-size: 12px;
+}
+
+.action-btn i {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.find-similar {
+  background-color: #ff9000;
+}
+
+.delete {
+  background-color: #ff3b30;
 }
 </style> 

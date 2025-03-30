@@ -87,8 +87,8 @@ export default {
         {
           id: '3',
           name: 'KIVIK 奇维',
-          description: '二人沙发, 布罗福尔斯 灰色',
-          price: '1999',
+          description: '三人沙发, 布罗福尔斯 灰色',
+          price: '3999',
           priceDecimal: '00',
           tag: '特惠',
           subInfo: '舒适耐用的宽敞沙发',
