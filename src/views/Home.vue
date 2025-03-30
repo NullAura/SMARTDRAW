@@ -190,7 +190,8 @@
             @click="selectCartItem(item)"
           >
             <div class="cart-product-image">
-              <div class="placeholder-image">{{ item.name.charAt(0) }}</div>
+              <img v-if="item.imageUrl" :src="item.imageUrl" alt="商品图片" class="cart-product-img" />
+              <div v-else class="placeholder-image">{{ item.name.charAt(0) }}</div>
             </div>
             <div class="cart-product-info">
               <div class="cart-product-name">{{ item.name }}</div>
@@ -389,8 +390,58 @@ const generateImage = async () => {
     })
     
     try {
+      // 智能替换功能总是显示固定图片
+      if (isReplaceMode.value) {
+        setTimeout(() => {
+          // 关闭加载提示
+          loadingToast.close()
+          
+          // 使用固定图片路径
+          const imageUrl = '/images/success3.png'
+          
+          // 显示预加载提示
+          const preloadToast = showLoadingToast({
+            message: '正在加载图片...',
+            forbidClick: true,
+            duration: 0
+          })
+          
+          // 预加载图片
+          const img = new Image()
+          img.onload = function() {
+            // 图片加载成功，关闭预加载提示
+            preloadToast.close()
+            
+            // 设置结果图片
+            generatedImage.value = imageUrl
+            
+            // 显示成功提示
+            showToast({
+              message: '生成成功！',
+              type: 'success',
+              position: 'bottom'
+            })
+          }
+          
+          img.onerror = function() {
+            // 图片加载失败
+            preloadToast.close()
+            showToast({
+              message: '图片加载失败，请重试',
+              type: 'fail'
+            })
+          }
+          
+          // 开始加载图片
+          img.src = imageUrl
+        }, 2000) // 模拟2秒的处理时间
+        
+        return
+      }
+      
+      // 以下是原来的逻辑，针对非智能替换模式
       // 准备图片数据
-      const imageData = isReplaceMode.value ? replaceImages.value[0] : simpleImage.value
+      const imageData = simpleImage.value
       if (!imageData || !imageData.file) {
         throw new Error('图片数据无效')
       }
@@ -2063,5 +2114,24 @@ img {
   .cart-items-list {
     max-height: none;
   }
+}
+
+.cart-product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #666;
+  background-color: #f5f5f5;
+  border-radius: 8px;
 }
 </style>
