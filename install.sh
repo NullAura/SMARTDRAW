@@ -111,11 +111,14 @@ install_mongodb_linux() {
 # 检查 Node.js 版本
 check_node_version() {
     if ! command -v node &> /dev/null; then
-        print_error "Node.js 未安装"
+        print_warning "Node.js 未安装"
         if [ "$OS_TYPE" = "macos" ]; then
             if ask_install "Node.js" "$INSTALL_CMD node"; then
                 node_version=$(node -v | cut -d'v' -f2)
-                if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                # 使用bash的版本比较
+                if [[ "$(printf '%s\n' "20.0.0" "$node_version" | sort -V | head -n1)" = "20.0.0" ]]; then
+                    print_info "Node.js 版本已满足要求"
+                else
                     print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
                     exit 1
                 fi
@@ -125,7 +128,10 @@ check_node_version() {
         else
             if ask_install "Node.js" "install_nodejs_linux"; then
                 node_version=$(node -v | cut -d'v' -f2)
-                if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                # 使用bash的版本比较
+                if [[ "$(printf '%s\n' "20.0.0" "$node_version" | sort -V | head -n1)" = "20.0.0" ]]; then
+                    print_info "Node.js 版本已满足要求"
+                else
                     print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
                     exit 1
                 fi
@@ -135,12 +141,18 @@ check_node_version() {
         fi
     else
         node_version=$(node -v | cut -d'v' -f2)
-        if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+        # 使用bash的版本比较
+        if [[ "$(printf '%s\n' "20.0.0" "$node_version" | sort -V | head -n1)" = "20.0.0" ]]; then
+            print_info "Node.js 版本已满足要求"
+        else
             print_error "Node.js 版本需要 >= 20.0.0，当前版本: $node_version"
             if [ "$OS_TYPE" = "macos" ]; then
                 if ask_install "Node.js" "$UPGRADE_CMD node"; then
                     node_version=$(node -v | cut -d'v' -f2)
-                    if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    # 使用bash的版本比较
+                    if [[ "$(printf '%s\n' "20.0.0" "$node_version" | sort -V | head -n1)" = "20.0.0" ]]; then
+                        print_info "Node.js 版本已满足要求"
+                    else
                         print_error "Node.js 版本仍然不满足要求"
                         exit 1
                     fi
@@ -150,7 +162,10 @@ check_node_version() {
             else
                 if ask_install "Node.js" "install_nodejs_linux"; then
                     node_version=$(node -v | cut -d'v' -f2)
-                    if [[ $(echo "$node_version 20.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    # 使用bash的版本比较
+                    if [[ "$(printf '%s\n' "20.0.0" "$node_version" | sort -V | head -n1)" = "20.0.0" ]]; then
+                        print_info "Node.js 版本已满足要求"
+                    else
                         print_error "Node.js 版本仍然不满足要求"
                         exit 1
                     fi
@@ -165,11 +180,15 @@ check_node_version() {
 # 检查 npm 版本
 check_npm_version() {
     if ! command -v npm &> /dev/null; then
-        print_error "npm 未安装"
+        print_warning "npm 未安装"
         if [ "$OS_TYPE" = "macos" ]; then
             if ask_install "npm" "$INSTALL_CMD npm"; then
                 npm_version=$(npm -v)
-                if [[ $(echo "$npm_version 8.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                echo "DEBUG: npm版本=$npm_version"
+                # 使用bash的版本比较
+                if [[ "$(printf '%s\n' "8.0.0" "$npm_version" | sort -V | head -n1)" = "8.0.0" ]]; then
+                    print_info "npm 版本已满足要求"
+                else
                     print_error "npm 版本需要 >= 8.0.0，当前版本: $npm_version"
                     exit 1
                 fi
@@ -179,7 +198,11 @@ check_npm_version() {
         else
             if ask_install "npm" "install_nodejs_linux"; then
                 npm_version=$(npm -v)
-                if [[ $(echo "$npm_version 8.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                echo "DEBUG: npm版本=$npm_version"
+                # 使用bash的版本比较
+                if [[ "$(printf '%s\n' "8.0.0" "$npm_version" | sort -V | head -n1)" = "8.0.0" ]]; then
+                    print_info "npm 版本已满足要求"
+                else
                     print_error "npm 版本需要 >= 8.0.0，当前版本: $npm_version"
                     exit 1
                 fi
@@ -189,12 +212,20 @@ check_npm_version() {
         fi
     else
         npm_version=$(npm -v)
-        if [[ $(echo "$npm_version 8.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+        echo "DEBUG: npm版本=$npm_version"
+        # 使用bash的版本比较
+        if [[ "$(printf '%s\n' "8.0.0" "$npm_version" | sort -V | head -n1)" = "8.0.0" ]]; then
+            print_info "npm 版本已满足要求"
+        else
             print_error "npm 版本需要 >= 8.0.0，当前版本: $npm_version"
             if [ "$OS_TYPE" = "macos" ]; then
                 if ask_install "npm" "$UPGRADE_CMD npm"; then
                     npm_version=$(npm -v)
-                    if [[ $(echo "$npm_version 8.0.0" | awk '{print ($1 >= $2)}') -eq 0 ]]; then
+                    echo "DEBUG: 更新后npm版本=$npm_version"
+                    # 使用bash的版本比较
+                    if [[ "$(printf '%s\n' "8.0.0" "$npm_version" | sort -V | head -n1)" = "8.0.0" ]]; then
+                        print_info "npm 版本已满足要求"
+                    else
                         print_error "npm 版本仍然不满足要求"
                         exit 1
                     fi
@@ -202,10 +233,8 @@ check_npm_version() {
                     exit 1
                 fi
             else
-                print_info "npm 版本已满足要求"
+                exit 1
             fi
-        else
-            print_info "npm 版本已满足要求"
         fi
     fi
 }
