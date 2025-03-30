@@ -20,4 +20,17 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // 添加代理配置解决CORS问题
+  server: {
+    proxy: {
+      // 将/api前缀的请求代理到目标服务器
+      '/api': {
+        target: 'http://121.41.225.168:9000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        // 设置代理超时时间
+        timeout: 1200000
+      }
+    }
+  }
 })

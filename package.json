@@ -31,8 +31,23 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.22.0",
+    "form-data": "^4.0.2",
+    "node-fetch": "^2.7.0",
     "prettier": "^3.2.5",
     "vite": "^5.1.4",
     "vite-plugin-vue-devtools": "^7.0.16"
-  }
+  },
+  "description": "一个基于 Vue 3 + Node.js + MongoDB 的智能绘图平台。",
+  "main": "test_generate.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NullAura/SMARTDRAW.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NullAura/SMARTDRAW/issues"
+  },
+  "homepage": "https://github.com/NullAura/SMARTDRAW#readme"
 }
