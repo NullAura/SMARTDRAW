@@ -419,7 +419,7 @@ export default {
 .category-grid, .collections-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 16px;
   margin-top: 24px;
   max-width: 700px;
   margin-left: auto;
@@ -428,21 +428,23 @@ export default {
 
 .category-item, .collection-item {
   position: relative;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
   background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  aspect-ratio: 1 / 1;
 }
 
 .category-item:hover, .collection-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .placeholder-image {
   width: 100%;
-  height: 180px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,11 +454,17 @@ export default {
 }
 
 .category-item h3, .collection-item h3 {
-  margin: 8px 0;
+  margin: 0;
   font-size: 14px;
   font-weight: normal;
   text-align: center;
-  padding: 0 8px;
+  padding: 8px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
 }
 
 .section-header {
@@ -489,15 +497,16 @@ h2 {
 
 .category-image {
   width: 100%;
-  height: 180px;
+  height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 .category-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
 }
 
 .category-item:hover .category-image img,
