@@ -39,15 +39,21 @@
         <h2>热门</h2>
         <div class="category-grid">
           <div class="category-item" @click="goToProductList('儿童')">
-            <div class="placeholder-image">儿</div>
+            <div class="category-image">
+              <img :src="kidsImage" alt="儿童" />
+            </div>
             <h3>儿童</h3>
           </div>
           <div class="category-item" @click="goToProductList('床上用品')">
-            <div class="placeholder-image">床</div>
+            <div class="category-image">
+              <img :src="beddingImage" alt="床上用品" />
+            </div>
             <h3>床上用品</h3>
           </div>
           <div class="category-item" @click="goToProductList('沙发')">
-            <div class="placeholder-image">沙</div>
+            <div class="category-image">
+              <img :src="sofaImage" alt="沙发" />
+            </div>
             <h3>沙发</h3>
           </div>
         </div>
@@ -61,16 +67,24 @@
         </div>
         <div class="collections-grid">
           <div class="collection-item" @click="goToProductList('必买清单')">
-            <div class="placeholder-image">必</div>
+            <div class="category-image">
+              <img :src="mustBuyImage" alt="必买清单" />
+            </div>
           </div>
           <div class="collection-item" @click="goToProductList('打工人必备')">
-            <div class="placeholder-image">打</div>
+            <div class="category-image">
+              <img :src="workEssentialsImage" alt="打工人必备" />
+            </div>
           </div>
           <div class="collection-item" @click="goToProductList('宅家游戏')">
-            <div class="placeholder-image">宅</div>
+            <div class="category-image">
+              <img :src="homeGamesImage" alt="宅家游戏" />
+            </div>
           </div>
           <div class="collection-item" @click="goToProductList('学有所成')">
-            <div class="placeholder-image">学</div>
+            <div class="category-image">
+              <img :src="studyImage" alt="学有所成" />
+            </div>
           </div>
         </div>
       </section>
@@ -181,6 +195,15 @@
 </template>
 
 <script>
+// 导入图片资源
+import kidsImage from '@/assets/images/kids.jpg'
+import beddingImage from '@/assets/images/bedding.jpg'
+import sofaImage from '@/assets/images/sofa.jpg'
+import mustBuyImage from '@/assets/images/must-buy.png'
+import workEssentialsImage from '@/assets/images/work-essentials.png'
+import homeGamesImage from '@/assets/images/home-games.png'
+import studyImage from '@/assets/images/study.png'
+
 export default {
   name: 'Store',
   data() {
@@ -200,7 +223,15 @@ export default {
         { id: 'desk', title: '书桌和书桌椅' },
         { id: 'bathroom', title: '浴室家具和收纳' },
         { id: 'outdoor', title: '户外产品' }
-      ]
+      ],
+      // 图片资源
+      kidsImage,
+      beddingImage,
+      sofaImage,
+      mustBuyImage,
+      workEssentialsImage,
+      homeGamesImage,
+      studyImage
     }
   },
   methods: {
@@ -454,5 +485,23 @@ h2 {
 
 .category-section:first-of-type {
   padding-top: 0;
+}
+
+.category-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.category-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.category-item:hover .category-image img,
+.collection-item:hover .category-image img {
+  transform: scale(1.05);
 }
 </style>
