@@ -390,56 +390,130 @@ const generateImage = async () => {
     })
     
     try {
-      // 智能替换功能总是显示固定图片
+      // 智能替换模式
       if (isReplaceMode.value) {
-        setTimeout(() => {
-          // 关闭加载提示
-          loadingToast.close()
-          
-          // 使用固定图片路径
-          const imageUrl = '/images/success3.png'
-          
+        // 检查是否上传了两张图片
+        if (!replaceImages.value[0] || !replaceImages.value[1]) {
+          throw new Error('请上传原始图片和替换家具图片')
+        }
+
+        // 创建FormData
+        const formData = new FormData()
+        formData.append('workflow_type', 'mergin')  // 使用双图模式
+        formData.append('image1', replaceImages.value[0].file)
+        formData.append('image2', replaceImages.value[1].file)
+        formData.append('username', 'testuser')
+        formData.append('prompt', prompt.value.trim())
+        formData.append('output_format', 'url')
+
+        console.log('智能替换模式：准备发送请求...')
+
+        // 发送请求到服务器
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 1200000) // 20分钟超时
+
+        try {
+          const response = await fetch('/api/generate', {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+          })
+
+          // 清除超时器
+          clearTimeout(timeoutId)
+
+          console.log('服务器响应状态:', response.status)
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('服务器错误响应:', errorText)
+            throw new Error(`生成请求失败: ${response.status}, ${errorText}`)
+          }
+
+          const result = await response.json()
+          console.log('生成结果:', result)
+
+          if (result.status !== 'success') {
+            throw new Error(`生成状态异常: ${result.status}`)
+          }
+
+          if (!result.outputs || result.outputs.length === 0) {
+            throw new Error('没有返回输出图片')
+          }
+
+          // 修改图片URL构建，使用代理处理
+          const lastImagePath = result.outputs[result.outputs.length - 1]
+          const imageUrl = `/api${lastImagePath}`
+          console.log('设置生成图片URL:', imageUrl)
+
+          // 预加载图片
+          const img = new Image()
+          console.log('开始预加载图片...')
+
+          // 设置加载超时
+          const imgLoadTimeout = setTimeout(() => {
+            console.error('图片加载超时!')
+            img.src = '' // 中止当前加载
+            showToast({
+              message: '图片加载超时，请重试',
+              type: 'fail'
+            })
+          }, 30000) // 30秒超时
+
           // 显示预加载提示
           const preloadToast = showLoadingToast({
             message: '正在加载图片...',
             forbidClick: true,
             duration: 0
           })
-          
-          // 预加载图片
-          const img = new Image()
+
+          // 定义加载成功处理
           img.onload = function() {
-            // 图片加载成功，关闭预加载提示
+            clearTimeout(imgLoadTimeout)
             preloadToast.close()
             
-            // 设置结果图片
+            console.log('图片预加载成功！尺寸:', img.width, 'x', img.height)
             generatedImage.value = imageUrl
             
-            // 显示成功提示
+            console.log('成功更新UI显示生成图片')
+            
             showToast({
               message: '生成成功！',
               type: 'success',
               position: 'bottom'
             })
           }
-          
-          img.onerror = function() {
-            // 图片加载失败
+
+          // 定义加载失败处理
+          img.onerror = function(err) {
+            clearTimeout(imgLoadTimeout)
             preloadToast.close()
+            
+            console.error('图片预加载失败:', err)
+            console.error('失败URL:', imageUrl)
+            
             showToast({
               message: '图片加载失败，请重试',
               type: 'fail'
             })
           }
-          
+
           // 开始加载图片
           img.src = imageUrl
-        }, 2000) // 模拟2秒的处理时间
-        
+
+        } catch (fetchError) {
+          if (fetchError.name === 'AbortError') {
+            throw new Error('请求超时，请重试')
+          }
+          throw fetchError
+        } finally {
+          clearTimeout(timeoutId)
+        }
+
         return
       }
       
-      // 以下是原来的逻辑，针对非智能替换模式
+      // 以下是快速生成模式的逻辑
       // 准备图片数据
       const imageData = simpleImage.value
       if (!imageData || !imageData.file) {
@@ -448,12 +522,13 @@ const generateImage = async () => {
       
       console.log('准备上传图片:', imageData.file.name, imageData.file.type, imageData.file.size)
       
-      // 创建FormData - 严格按照测试文件顺序和方式
+      // 创建FormData - 严格按照服务器接口要求
       const formData = new FormData()
+      formData.append('workflow_type', 'fastbd')  // 使用单图模式
       formData.append('image', imageData.file)
       formData.append('username', 'testuser')
       formData.append('prompt', prompt.value.trim())
-      formData.append('return_type', 'url')
+      formData.append('output_format', 'url')
       
       console.log('请求参数设置完成，开始发送请求...')
       
