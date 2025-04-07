@@ -23,7 +23,7 @@ export default defineConfig({
     proxy: {
       // 将/api前缀的请求代理到目标服务器
       '/api': {
-        target: 'http://121.41.225.168:9000',
+        target: 'http://110.42.200.171:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         // 设置代理超时时间

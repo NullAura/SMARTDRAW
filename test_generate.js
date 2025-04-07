@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 配置
-const BASE_URL = "http://121.41.225.168:9000";
+const BASE_URL = "http://110.42.200.171:8000";
 const TEST_IMAGE_PATH = path.join(__dirname, "test_image.jpg"); // 请将测试图片放在同目录下
 
 async function testHealthCheck() {
