@@ -1,0 +1,86 @@
+:root {
+  /* 品牌色 */
+  --brand-primary: #3c2913;     /* 主色调 */
+  --brand-secondary: #b9a88a;   /* 次要色调 */
+  --brand-accent: #e4d8cc;      /* 强调色 */
+  
+  /* 中性色 */
+  --neutral-100: #ffffff;       /* 纯白 */
+  --neutral-200: #f8f4eb;       /* 浅米色背景 */
+  --neutral-300: #e9e2d8;       /* 中米色边框 */
+  --neutral-400: #dccfbf;       /* 暗米色 */
+  --neutral-500: #a99d8b;       /* 中灰棕 */
+  --neutral-600: #7d6e5a;       /* 深灰棕 */
+  --neutral-700: #5e513f;       /* 暗灰棕 */
+  --neutral-800: #3c2913;       /* 深棕 */
+  --neutral-900: #2a1d0f;       /* 近黑棕 */
+  
+  /* 状态色 */
+  --state-success: #4caf50;     /* 成功/可用 */
+  --state-info: #2196f3;        /* 信息/提示 */
+  --state-warning: #ff9800;     /* 警告/促销 */
+  --state-danger: #f44336;      /* 危险/错误 */
+  
+  /* 功能色 */
+  --price-color: #ff6b00;       /* 价格颜色 */
+  --discount-color: #ff4d4f;    /* 折扣颜色 */
+  --link-color: #3c2913;        /* 链接颜色 */
+  
+  /* 阴影 */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-round: 50%;
+  
+  /* 字体家族 */
+  --font-family: 'PingFang SC', 'Helvetica Neue', Helvetica, 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  
+  /* 字体大小 */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+  --font-size-heading: 28px;
+  
+  /* 行高 */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-loose: 1.8;
+  
+  /* 字重 */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 过渡动画 */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.5s;
+  
+  /* Z轴层级 */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+} 

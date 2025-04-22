@@ -2,13 +2,13 @@
 <template>
   <div class="store-container">
     <!-- 左侧导航栏 -->
-    <nav class="side-nav">
+    <nav class="side-nav" :class="{ 'show-side-nav': showSideNav }">
       <div class="nav-section">
         <div 
           v-for="(section, index) in sections" 
           :key="index"
           class="nav-item"
-          :class="{ highlight: activeSection === section.id }"
+          :class="{ active: activeSection === section.id }"
           @click="scrollToSection(section.id)"
         >
           {{ section.title }}
@@ -16,11 +16,18 @@
       </div>
     </nav>
 
+    <!-- 移动端遮罩 -->
+    <div class="mobile-mask" v-if="showSideNav" @click="showSideNav = false"></div>
+
     <!-- 主要内容区域 -->
     <div class="main-content" ref="mainContent" @scroll="handleScroll">
       <!-- 顶部导航栏 -->
       <nav class="top-nav">
         <div class="nav-items">
+          <!-- 移动端汉堡菜单按钮 -->
+          <div class="hamburger-menu" @click="showSideNav = !showSideNav">
+            <i class="fas fa-bars"></i>
+          </div>
           <div class="nav-item active">商品</div>
           <div class="nav-item">房间</div>
           <div class="nav-item">设计工具</div>
@@ -35,8 +42,8 @@
       </nav>
 
       <!-- 热门分类 -->
-      <section id="hot" class="hot-categories" ref="hot">
-        <h2>热门</h2>
+      <section id="hot" class="hot-categories section-container" ref="hot">
+        <h2 class="section-title">热门</h2>
         <div class="category-grid">
           <div class="category-item" @click="goToProductList('儿童')">
             <div class="category-image">
@@ -60,144 +67,102 @@
       </section>
 
       <!-- 主题合集 -->
-      <section id="collections" class="collections" ref="collections">
+      <section id="collections" class="collections section-container" ref="collections">
         <div class="section-header">
-          <h2>主题合集</h2>
+          <h2 class="section-title">主题合集</h2>
           <a href="#" class="view-all">全部</a>
         </div>
         <div class="collections-grid">
           <div class="collection-item" @click="goToProductList('必买清单')">
             <div class="category-image">
               <img :src="mustBuyImage" alt="必买清单" />
+              <div class="collection-overlay">
+                <span>必买清单</span>
+              </div>
             </div>
           </div>
           <div class="collection-item" @click="goToProductList('打工人必备')">
             <div class="category-image">
               <img :src="workEssentialsImage" alt="打工人必备" />
+              <div class="collection-overlay">
+                <span>打工人必备</span>
+              </div>
             </div>
           </div>
           <div class="collection-item" @click="goToProductList('宅家游戏')">
             <div class="category-image">
               <img :src="homeGamesImage" alt="宅家游戏" />
+              <div class="collection-overlay">
+                <span>宅家游戏</span>
+              </div>
             </div>
           </div>
           <div class="collection-item" @click="goToProductList('学有所成')">
             <div class="category-image">
               <img :src="studyImage" alt="学有所成" />
+              <div class="collection-overlay">
+                <span>学有所成</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 储物和收纳 -->
-      <section id="storage" class="category-section" ref="storage">
-        <h2>储物和收纳</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('储物和收纳')">
-            <div class="placeholder-image">储</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <!-- 其他分类区域 -->
-      <section id="sofa" class="category-section" ref="sofa">
-        <h2>沙发和扶手椅</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('沙发')">
-            <div class="category-image">
-              <img :src="sofaImage" alt="沙发" />
+      <!-- 商品分类部分 -->
+      <div class="categories-container">
+        <!-- 储物和收纳 -->
+        <section id="storage" class="category-section section-container" ref="storage">
+          <h2 class="section-title">储物和收纳</h2>
+          <div class="category-grid">
+            <div class="category-item" @click="goToProductList('储物和收纳')">
+              <div class="placeholder-image">储</div>
+              <h3>查看全部</h3>
             </div>
-            <h3>查看全部</h3>
           </div>
-          <div class="category-item" @click="goToProductDetail('3')">
-            <div class="category-image">
-              <img src="@/assets/images/sofa1.png" alt="希维克沙发" />
+        </section>
+
+        <!-- 沙发分类 -->
+        <section id="sofa" class="category-section section-container" ref="sofa">
+          <h2 class="section-title">沙发和扶手椅</h2>
+          <div class="products-preview">
+            <div class="product-preview-item" @click="goToProductList('沙发')">
+              <div class="category-image">
+                <img :src="sofaImage" alt="沙发" />
+              </div>
+              <h3>查看全部</h3>
             </div>
-            <h3>KIVIK 希维克</h3>
+            <ProductCard 
+              :product="{
+                id: '3',
+                name: 'KIVIK 希维克',
+                description: '三人沙发',
+                price: '3999',
+                priceDecimal: '00',
+                tag: '热卖',
+                imageUrl: sofa1Image
+              }"
+              @click="goToProductDetail"
+            />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="bed" class="category-section" ref="bed">
-        <h2>床和床垫</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('床和床垫')">
-            <div class="placeholder-image">床</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="textile" class="category-section" ref="textile">
-        <h2>纺织品</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('纺织品')">
-            <div class="placeholder-image">纺</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="dining" class="category-section" ref="dining">
-        <h2>餐桌和餐椅</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('餐桌和餐椅')">
-            <div class="placeholder-image">餐</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="kitchenware" class="category-section" ref="kitchenware">
-        <h2>餐具和厨具</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('餐具和厨具')">
-            <div class="placeholder-image">厨</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="cleaning" class="category-section" ref="cleaning">
-        <h2>清洁及晾晒用品</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('清洁及晾晒用品')">
-            <div class="placeholder-image">清</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="desk" class="category-section" ref="desk">
-        <h2>书桌和书桌椅</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('书桌和书桌椅')">
-            <div class="placeholder-image">书</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="bathroom" class="category-section" ref="bathroom">
-        <h2>浴室家具和收纳</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('浴室家具和收纳')">
-            <div class="placeholder-image">浴</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
-
-      <section id="outdoor" class="category-section" ref="outdoor">
-        <h2>户外产品</h2>
-        <div class="category-grid">
-          <div class="category-item" @click="goToProductList('户外产品')">
-            <div class="placeholder-image">户</div>
-            <h3>查看全部</h3>
-          </div>
-        </div>
-      </section>
+        <!-- 其他分类 -->
+        <template v-for="(section, index) in otherSections" :key="index">
+          <section 
+            :id="section.id" 
+            class="category-section section-container" 
+            :ref="section.id"
+          >
+            <h2 class="section-title">{{ section.title }}</h2>
+            <div class="category-grid">
+              <div class="category-item" @click="goToProductList(section.title)">
+                <div class="placeholder-image">{{ section.title.charAt(0) }}</div>
+                <h3>查看全部</h3>
+              </div>
+            </div>
+          </section>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -207,17 +172,25 @@
 import kidsImage from '@/assets/images/kids.jpg'
 import beddingImage from '@/assets/images/bedding.jpg'
 import sofaImage from '@/assets/images/sofa.jpg'
+import sofa1Image from '@/assets/images/sofa1.png'
 import mustBuyImage from '@/assets/images/must-buy.png'
 import workEssentialsImage from '@/assets/images/work-essentials.png'
 import homeGamesImage from '@/assets/images/home-games.png'
 import studyImage from '@/assets/images/study.png'
 
+// 导入组件
+import ProductCard from '../components/ui/ProductCard.vue'
+
 export default {
   name: 'Store',
+  components: {
+    ProductCard
+  },
   data() {
     return {
       activeSection: 'hot',
       cartCount: 0,
+      showSideNav: false, // 控制侧边栏显示状态
       sections: [
         { id: 'hot', title: '热门' },
         { id: 'collections', title: '主题合集' },
@@ -232,88 +205,122 @@ export default {
         { id: 'bathroom', title: '浴室家具和收纳' },
         { id: 'outdoor', title: '户外产品' }
       ],
+      // 其他分类
+      otherSections: [
+        { id: 'bed', title: '床和床垫' },
+        { id: 'textile', title: '纺织品' },
+        { id: 'dining', title: '餐桌和餐椅' },
+        { id: 'kitchenware', title: '餐具和厨具' },
+        { id: 'cleaning', title: '清洁及晾晒用品' },
+        { id: 'desk', title: '书桌和书桌椅' },
+        { id: 'bathroom', title: '浴室家具和收纳' },
+        { id: 'outdoor', title: '户外产品' }
+      ],
       // 图片资源
       kidsImage,
       beddingImage,
       sofaImage,
+      sofa1Image,
       mustBuyImage,
       workEssentialsImage,
       homeGamesImage,
       studyImage
     }
   },
+  mounted() {
+    // 加载购物车数量
+    this.loadCartCount();
+    
+    // 初始化滚动监听
+    this.handleScroll();
+    
+    // 监听窗口大小变化，自动调整侧边栏显示
+    window.addEventListener('resize', this.checkScreenSize);
+    this.checkScreenSize();
+  },
+  beforeUnmount() {
+    // 移除事件监听
+    window.removeEventListener('resize', this.checkScreenSize);
+  },
   methods: {
+    // 检查屏幕尺寸
+    checkScreenSize() {
+      this.showSideNav = window.innerWidth >= 768;
+    },
     handleScroll() {
       const mainContent = this.$refs.mainContent;
       const scrollTop = mainContent.scrollTop;
       
       // 获取所有区域的位置信息
-      this.sections.forEach(section => {
-        const element = this.$refs[section.id];
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const offsetTop = rect.top - mainContent.getBoundingClientRect().top;
-          
-          // 当区域距离顶部小于100px时，将其设置为活动区域
-          if (offsetTop <= 100 && offsetTop + rect.height > 100) {
-            this.activeSection = section.id;
+      const positions = this.sections.map(section => {
+        const sectionRef = this.$refs[section.id];
+        if (sectionRef) {
+          // 在Vue 3中，:ref会返回一个数组，需要获取第一个元素
+          const element = Array.isArray(sectionRef) ? sectionRef[0] : sectionRef;
+          if (element && typeof element.getBoundingClientRect === 'function') {
+            return {
+              id: section.id,
+              position: element.getBoundingClientRect().top + scrollTop - 100
+            };
           }
         }
+        return { id: section.id, position: 0 };
       });
-    },
-    scrollToSection(sectionId) {
-      const element = this.$refs[sectionId];
-      if (element) {
-        this.$refs.mainContent.scrollTo({
-          top: element.offsetTop - 80,
-          behavior: 'smooth'
-        });
+      
+      // 确定当前位置所属区域
+      for (let i = positions.length - 1; i >= 0; i--) {
+        if (scrollTop >= positions[i].position) {
+          this.activeSection = positions[i].id;
+          break;
+        }
       }
     },
+    
+    scrollToSection(sectionId) {
+      const targetRef = this.$refs[sectionId];
+      if (targetRef) {
+        const target = Array.isArray(targetRef) ? targetRef[0] : targetRef;
+        if (target && typeof target.getBoundingClientRect === 'function') {
+          this.$refs.mainContent.scrollTo({
+            top: target.getBoundingClientRect().top + this.$refs.mainContent.scrollTop - 80,
+            behavior: 'smooth'
+          });
+        }
+      }
+    },
+    
     goToProductList(category) {
-      this.$router.push({ 
-        name: 'ProductList', 
-        params: { category: encodeURIComponent(category) } 
+      this.$router.push({
+        name: 'ProductList',
+        params: { category: encodeURIComponent(category) }
       });
     },
+    
     goToProductDetail(productId) {
       this.$router.push({
         name: 'ProductDetail',
         params: { id: productId }
       });
     },
+    
     goToCart() {
-      this.$router.push('/cart');
+      this.$router.push({ name: 'Cart' });
     },
-    // 获取购物车中商品数量
-    getCartCount() {
-      const cartData = localStorage.getItem('cartItems');
-      if (cartData) {
-        const cartItems = JSON.parse(cartData);
-        this.cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-      } else {
-        this.cartCount = 0;
-      }
-    },
-    // 监听购物车更新事件
-    handleStorageEvent(event) {
-      if (event.key === 'cartItems' || event.key === 'cartUpdated') {
-        this.getCartCount();
+    
+    loadCartCount() {
+      // 从localStorage获取购物车数据
+      try {
+        const cartData = localStorage.getItem('cartItems');
+        if (cartData) {
+          const cart = JSON.parse(cartData);
+          if (Array.isArray(cart)) {
+            this.cartCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+          }
+        }
+      } catch (error) {
+        console.error('加载购物车数据失败:', error);
       }
     }
-  },
-  mounted() {
-    // 初始化时检查一次滚动位置
-    this.handleScroll();
-    // 获取购物车数量
-    this.getCartCount();
-    
-    // 监听storage事件，当购物车数据更新时更新数量
-    window.addEventListener('storage', this.handleStorageEvent);
-  },
-  beforeUnmount() {
-    // 移除storage事件监听
-    window.removeEventListener('storage', this.handleStorageEvent);
   }
 }
 </script>
@@ -321,93 +328,107 @@ export default {
 <style scoped>
 .store-container {
   display: flex;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  background-color: var(--neutral-200);
 }
 
+/* 左侧导航栏 */
 .side-nav {
-  width: 70px;
-  padding: 16px 4px;
-  background: #fff;
-  border-right: 1px solid #eee;
-  flex-shrink: 0;
+  width: 100px;
   position: sticky;
   top: 0;
   height: 100vh;
+  background: var(--neutral-100);
   overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-index-sticky);
+  transition: transform 0.3s ease;
 }
 
 .nav-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: var(--spacing-sm) 0;
 }
 
-.side-nav .nav-item {
-  padding: 6px 4px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  font-size: 12px;
+.nav-item {
+  padding: var(--spacing-md) var(--spacing-sm);
   text-align: center;
-  word-break: break-word;
-  line-height: 1.2;
+  cursor: pointer;
+  position: relative;
+  font-size: var(--font-size-sm);
+  color: var(--neutral-700);
+  transition: all var(--transition-fast);
+  border-left: 3px solid transparent;
 }
 
-.side-nav .nav-item:hover {
-  background-color: #f5f5f5;
+.nav-item:hover {
+  color: var(--brand-primary);
+  background-color: var(--neutral-200);
 }
 
-.side-nav .nav-item.highlight {
-  font-weight: bold;
-  background-color: #f5f5f5;
-  color: #0058a3;
-  transform: scale(1.05);
+.nav-item.active {
+  color: var(--brand-primary);
+  background-color: var(--neutral-200);
+  font-weight: var(--font-weight-medium);
+  border-left: 3px solid var(--brand-primary);
 }
 
+/* 主要内容区域 */
 .main-content {
   flex: 1;
-  padding: 0 24px;
-  height: 100vh;
   overflow-y: auto;
   scroll-behavior: smooth;
-  scroll-padding-top: 80px;
+  padding-bottom: var(--spacing-xl);
 }
 
+/* 顶部导航栏 */
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
-  background: white;
+  padding: var(--spacing-md);
+  background: var(--neutral-100);
   position: sticky;
   top: 0;
-  z-index: 100;
-  margin: 0 -24px;
+  z-index: var(--z-index-sticky);
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-items {
   display: flex;
-  gap: 32px;
+  gap: var(--spacing-lg);
 }
 
-.top-nav .nav-item {
-  font-size: 18px;
+.nav-item {
+  padding: var(--spacing-xs) 0;
   cursor: pointer;
+  position: relative;
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
 }
 
 .nav-item.active {
-  color: #0058a3;
-  font-weight: bold;
+  color: var(--brand-primary);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background-color: var(--brand-primary);
+  border-radius: 2px;
 }
 
 .nav-icons {
   display: flex;
-  gap: 20px;
-  font-size: 18px;
   align-items: center;
+  gap: var(--spacing-md);
+  color: var(--neutral-700);
+  font-size: var(--font-size-lg);
 }
 
 .cart-icon {
@@ -419,112 +440,279 @@ export default {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #ff5000;
+  background-color: var(--price-color);
   color: white;
-  border-radius: 10px;
-  min-width: 16px;
+  border-radius: 50%;
+  width: 16px;
   height: 16px;
-  line-height: 16px;
-  text-align: center;
   font-size: 10px;
-  padding: 0 4px;
-}
-
-.category-grid, .collections-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-top: 24px;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.category-item, .collection-item {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  aspect-ratio: 1 / 1;
-}
-
-.category-item:hover, .collection-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-}
-
-.placeholder-image {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  color: #bbb;
-  background-color: #f0f0f0;
 }
 
-.category-item h3, .collection-item h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: normal;
-  text-align: center;
-  padding: 8px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(2px);
+/* 公共部分 */
+.section-container {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-800);
+  margin-bottom: var(--spacing-md);
+  position: relative;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 32px;
+  margin-bottom: var(--spacing-md);
 }
 
 .view-all {
-  color: #0058a3;
+  font-size: var(--font-size-sm);
+  color: var(--brand-secondary);
   text-decoration: none;
 }
 
-h2 {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 32px 0 16px;
+/* 分类网格 */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
 }
 
-.category-section {
-  padding: 24px 0;
-  border-bottom: 1px solid #eee;
-  min-height: 300px;
+.category-item {
+  background-color: var(--neutral-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
 }
 
-.category-section:first-of-type {
-  padding-top: 0;
+.category-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
 }
 
 .category-image {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  height: 0;
+  padding-bottom: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .category-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform var(--transition-normal);
 }
 
-.category-item:hover .category-image img,
-.collection-item:hover .category-image img {
+.category-item:hover .category-image img {
   transform: scale(1.05);
+}
+
+.category-item h3 {
+  padding: var(--spacing-sm);
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-800);
+  border-top: 1px solid var(--neutral-300);
+}
+
+/* 主题合集 */
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.collection-item {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.collection-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.collection-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-md);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 商品预览 */
+.products-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.product-preview-item {
+  background-color: var(--neutral-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.product-preview-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.product-preview-item h3 {
+  padding: var(--spacing-sm);
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-800);
+  border-top: 1px solid var(--neutral-300);
+}
+
+/* 占位图像 */
+.placeholder-image {
+  background: linear-gradient(135deg, var(--neutral-300), var(--neutral-200));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-600);
+  font-size: 36px;
+  font-weight: var(--font-weight-light);
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+  position: relative;
+}
+
+.placeholder-image::before {
+  position: absolute;
+  content: attr(data-content);
+}
+
+/* 左侧导航栏 */
+.side-nav {
+  width: 100px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--neutral-100);
+  overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-index-sticky);
+  transition: transform 0.3s ease;
+}
+
+/* 汉堡菜单按钮 */
+.hamburger-menu {
+  display: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  margin-right: var(--spacing-md);
+}
+
+/* 移动端遮罩 */
+.mobile-mask {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: calc(var(--z-index-sticky) - 1);
+}
+
+/* 响应式调整 */
+@media (min-width: 768px) {
+  .side-nav {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 100px;
+  }
+  
+  .section-container {
+    padding: var(--spacing-lg);
+  }
+  
+  .category-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .collections-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .products-preview {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .hamburger-menu {
+    display: block;
+  }
+  
+  .side-nav {
+    position: fixed;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .side-nav.show-side-nav {
+    transform: translateX(0);
+  }
+  
+  .mobile-mask {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .collections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .products-preview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

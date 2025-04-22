@@ -1,0 +1,145 @@
+/* Element Plus 组件样式覆盖 */
+
+/* 按钮触发特效 */
+.el-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease !important;
+}
+
+.el-button:active {
+  transform: scale(0.96) !important;
+}
+
+/* 主要按钮 */
+.el-button--primary:hover {
+  background: linear-gradient(to right, var(--el-color-primary), #409eff) !important;
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3) !important;
+  border-color: transparent !important;
+}
+
+.el-button--primary:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--el-border-radius-base);
+  animation: el-ripple 0.6s ease-out;
+}
+
+/* 成功按钮 */
+.el-button--success:hover {
+  background: linear-gradient(to right, var(--el-color-success), #67c23a) !important;
+  box-shadow: 0 6px 16px rgba(103, 194, 58, 0.3) !important;
+  border-color: transparent !important;
+}
+
+.el-button--success:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--el-border-radius-base);
+  animation: el-ripple 0.6s ease-out;
+}
+
+/* 警告按钮 */
+.el-button--warning:hover {
+  background: linear-gradient(to right, var(--el-color-warning), #e6a23c) !important;
+  box-shadow: 0 6px 16px rgba(230, 162, 60, 0.3) !important;
+  border-color: transparent !important;
+}
+
+.el-button--warning:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--el-border-radius-base);
+  animation: el-ripple 0.6s ease-out;
+}
+
+/* 危险按钮 */
+.el-button--danger:hover {
+  background: linear-gradient(to right, var(--el-color-danger), #f56c6c) !important;
+  box-shadow: 0 6px 16px rgba(245, 108, 108, 0.3) !important;
+  border-color: transparent !important;
+}
+
+.el-button--danger:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--el-border-radius-base);
+  animation: el-ripple 0.6s ease-out;
+}
+
+/* 默认按钮 */
+.el-button--default:hover {
+  background: #f5f7fa !important;
+  border-color: #dcdfe6 !important;
+}
+
+.el-button--default:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--el-border-radius-base);
+  animation: el-ripple 0.6s ease-out;
+}
+
+@keyframes el-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* 自定义按钮样式 */
+.generate-btn, .review-btn, .polish-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease !important;
+}
+
+.generate-btn:active, .review-btn:active, .polish-btn:active {
+  transform: scale(0.96) !important;
+}
+
+.generate-btn:hover, .review-btn:hover, .polish-btn:hover {
+  background: linear-gradient(to right, var(--primary-color), #5a4127) !important;
+  box-shadow: 0 6px 16px rgba(60, 41, 19, 0.3) !important;
+}
+
+.generate-btn:active::after, .review-btn:active::after, .polish-btn:active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  animation: el-ripple 0.6s ease-out;
+} 

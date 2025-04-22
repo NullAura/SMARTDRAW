@@ -204,4 +204,23 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// 登出
+router.post('/logout', auth, async (req, res) => {
+  try {
+    // 在这里可以添加token黑名单或其他服务器端登出逻辑
+    console.log('用户登出成功:', req.user.userId);
+    
+    res.json({
+      success: true,
+      message: '登出成功'
+    });
+  } catch (error) {
+    console.error('用户登出错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '登出失败：' + error.message
+    });
+  }
+});
+
 module.exports = router; 

@@ -27,6 +27,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartdraw
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/works', require('./routes/works'));
+app.use('/api/merchant', require('./routes/merchant'));
 
 // 错误处理中间件
 app.use((err, req, res, next) => {

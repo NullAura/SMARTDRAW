@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    minlength: 3
   },
   email: {
     type: String,
@@ -17,12 +18,43 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: 6
   },
-  userType: {
+  role: {
     type: String,
-    enum: ['user', 'designer'],
+    enum: ['user', 'merchant', 'admin'],
     default: 'user'
+  },
+  // 商家相关字段
+  storeName: {
+    type: String,
+    required: function() {
+      return this.role === 'merchant';
+    }
+  },
+  phone: {
+    type: String,
+    required: function() {
+      return this.role === 'merchant';
+    }
+  },
+  address: {
+    type: String,
+    required: function() {
+      return this.role === 'merchant';
+    }
+  },
+  businessLicense: {
+    type: String,
+    required: function() {
+      return this.role === 'merchant';
+    }
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   },
   // 设计师特有字段
   description: {
@@ -66,37 +98,11 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// 验证密码方法
+// 密码比较方法
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  console.log('开始验证密码');
-  console.log('候选密码:', candidatePassword);
-  console.log('存储的密码:', this.password);
-  console.log('密码长度:', {
-    candidate: candidatePassword.length,
-    stored: this.password.length
-  });
-  console.log('密码类型:', {
-    candidate: typeof candidatePassword,
-    stored: typeof this.password
-  });
-  
-  try {
-    // 确保密码是字符串类型
-    const candidate = String(candidatePassword);
-    const stored = String(this.password);
-    
-    console.log('转换后的密码:', {
-      candidate,
-      stored
-    });
-    
-    const isMatch = await bcrypt.compare(candidate, stored);
-    console.log('密码验证结果:', isMatch);
-    return isMatch;
-  } catch (error) {
-    console.error('密码验证错误:', error);
-    throw error;
-  }
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema); 
+const User = mongoose.model('User', userSchema);
+
+module.exports = User; 

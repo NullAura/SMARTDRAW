@@ -1,0 +1,331 @@
+/* 动画库文件 */
+
+/* 淡入淡出 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滑动效果 */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    visibility: visible;
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    visibility: visible;
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    visibility: hidden;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    visibility: hidden;
+    transform: translateX(100%);
+  }
+}
+
+/* 缩放效果 */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* 3D翻转效果 */
+@keyframes flipInX {
+  from {
+    transform: perspective(400px) rotate3d(1, 0, 0, 90deg);
+    animation-timing-function: ease-in;
+    opacity: 0;
+  }
+  40% {
+    transform: perspective(400px) rotate3d(1, 0, 0, -20deg);
+    animation-timing-function: ease-in;
+  }
+  60% {
+    transform: perspective(400px) rotate3d(1, 0, 0, 10deg);
+    opacity: 1;
+  }
+  80% {
+    transform: perspective(400px) rotate3d(1, 0, 0, -5deg);
+  }
+  to {
+    transform: perspective(400px);
+  }
+}
+
+@keyframes flipInY {
+  from {
+    transform: perspective(400px) rotate3d(0, 1, 0, 90deg);
+    animation-timing-function: ease-in;
+    opacity: 0;
+  }
+  40% {
+    transform: perspective(400px) rotate3d(0, 1, 0, -20deg);
+    animation-timing-function: ease-in;
+  }
+  60% {
+    transform: perspective(400px) rotate3d(0, 1, 0, 10deg);
+    opacity: 1;
+  }
+  80% {
+    transform: perspective(400px) rotate3d(0, 1, 0, -5deg);
+  }
+  to {
+    transform: perspective(400px);
+  }
+}
+
+/* 弹跳效果 */
+@keyframes bounce {
+  from, 20%, 53%, 80%, to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* 脉冲效果 */
+@keyframes pulse {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+/* 摇晃效果 */
+@keyframes shake {
+  from, to {
+    transform: translate3d(0, 0, 0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translate3d(-10px, 0, 0);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+/* 浮动效果 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* 轻微摇摆 */
+@keyframes swing {
+  20% {
+    transform: rotate3d(0, 0, 1, 15deg);
+  }
+  40% {
+    transform: rotate3d(0, 0, 1, -10deg);
+  }
+  60% {
+    transform: rotate3d(0, 0, 1, 5deg);
+  }
+  80% {
+    transform: rotate3d(0, 0, 1, -5deg);
+  }
+  to {
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+}
+
+/* 闪光效果 */
+@keyframes flash {
+  from, 50%, to {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0;
+  }
+}
+
+/* 进度加载点 */
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* 光晕扫过效果 */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 边框闪光效果 */
+@keyframes borderGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(60, 41, 19, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(60, 41, 19, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(60, 41, 19, 0);
+  }
+}
+
+/* 淡入淡出类 */
+.fade-in { animation: fadeIn 0.5s ease both; }
+.fade-out { animation: fadeOut 0.5s ease both; }
+.fade-in-up { animation: fadeInUp 0.5s ease both; }
+.fade-in-down { animation: fadeInDown 0.5s ease both; }
+
+/* 滑动类 */
+.slide-in-left { animation: slideInLeft 0.5s ease both; }
+.slide-in-right { animation: slideInRight 0.5s ease both; }
+.slide-out-left { animation: slideOutLeft 0.5s ease both; }
+.slide-out-right { animation: slideOutRight 0.5s ease both; }
+
+/* 缩放类 */
+.zoom-in { animation: zoomIn 0.5s ease both; }
+.zoom-out { animation: zoomOut 0.5s ease both; }
+
+/* 3D翻转类 */
+.flip-in-x { animation: flipInX 0.8s ease both; }
+.flip-in-y { animation: flipInY 0.8s ease both; }
+
+/* 特效类 */
+.bounce { animation: bounce 1s both; }
+.pulse { animation: pulse 1s infinite ease-in-out both; }
+.shake { animation: shake 0.8s both; }
+.float { animation: float 3s infinite ease-in-out both; }
+.swing { animation: swing 1s both; }
+.flash { animation: flash 1s both; }
+
+/* 延迟类 */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* 闪光效果 */
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.2) 50%, 
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* 边框闪光 */
+.border-glow {
+  animation: borderGlow 2s infinite;
+}
+
+/* 动画持续时间 */
+.duration-fast { animation-duration: 0.3s; }
+.duration-normal { animation-duration: 0.5s; }
+.duration-slow { animation-duration: 0.8s; }
+.duration-very-slow { animation-duration: 1.2s; }
+
+/* 动画重复 */
+.repeat-1 { animation-iteration-count: 1; }
+.repeat-2 { animation-iteration-count: 2; }
+.repeat-3 { animation-iteration-count: 3; }
+.repeat-infinite { animation-iteration-count: infinite; }
+
+/* 动画时间函数 */
+.ease-linear { animation-timing-function: linear; }
+.ease-in { animation-timing-function: ease-in; }
+.ease-out { animation-timing-function: ease-out; }
+.ease-in-out { animation-timing-function: ease-in-out; }
+
+/* 动画方向 */
+.alternate { animation-direction: alternate; }
+.reverse { animation-direction: reverse; }
+.alternate-reverse { animation-direction: alternate-reverse; } 

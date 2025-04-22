@@ -14,9 +14,13 @@
 
     <!-- 筛选选项 -->
     <div class="filter-options">
-      <div class="filter-item">
+      <div 
+        class="filter-item" 
+        :class="{ active: activeFilter === 'price' }"
+        @click="toggleFilter('price')"
+      >
         <span>价格排序</span>
-        <i class="fas fa-chevron-down"></i>
+        <i class="fas" :class="getPriceIcon()"></i>
       </div>
       <div class="filter-item">
         <span>颜色</span>
@@ -34,37 +38,48 @@
 
     <!-- 商品列表 -->
     <div class="products-grid">
-      <div 
-        v-for="(product, index) in filteredProducts" 
-        :key="index" 
-        class="product-card"
-        @click="goToProductDetail(product.id)"
-      >
-        <div class="product-image">
-          <img v-if="product.imageUrl" :src="product.imageUrl" alt="商品图片" class="product-img"/>
-          <div v-else class="placeholder-image">{{ product.name.charAt(0) }}</div>
-          <div v-if="product.tag" class="product-tag">{{ product.tag }}</div>
-        </div>
-        <div class="product-info">
-          <h3 class="product-name">{{ product.name }}</h3>
-          <p class="product-description">{{ product.description }}</p>
-          <p class="product-price">¥{{ product.price }}.<span class="price-decimal">{{ product.priceDecimal }}</span></p>
-          <p v-if="product.subInfo" class="product-subinfo">{{ product.subInfo }}</p>
-        </div>
-      </div>
+      <ProductCard 
+        v-for="product in filteredProducts" 
+        :key="product.id" 
+        :product="product"
+        @click="goToProductDetail"
+      />
     </div>
+    
+    <!-- 空状态 -->
+    <EmptyState
+      v-if="filteredProducts.length === 0"
+      icon="search"
+      title="未找到商品"
+      description="没有符合条件的商品，请尝试其他筛选条件"
+    >
+      <template #action>
+        <button class="btn btn-primary" @click="clearFilters">
+          清除筛选条件
+        </button>
+      </template>
+    </EmptyState>
   </div>
 </template>
 
 <script>
 // 导入沙发图片
 import sofa1Image from '@/assets/images/sofa1.png'
+// 导入组件
+import ProductCard from '../components/ui/ProductCard.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
 
 export default {
   name: 'ProductList',
+  components: {
+    ProductCard,
+    EmptyState
+  },
   data() {
     return {
       categoryName: '',
+      activeFilter: '',
+      priceOrder: 'none', // 'asc', 'desc', 'none'
       // 模拟商品数据
       products: [
         {
@@ -121,16 +136,33 @@ export default {
   },
   computed: {
     filteredProducts() {
-      // 根据路由参数进行筛选
+      // 首先按类别筛选
+      let result = this.products;
+      
       if (this.categoryName && this.categoryName !== '全部') {
-        return this.products.filter(product => 
+        result = this.products.filter(product => 
           product.category === this.categoryName || 
           product.name.includes(this.categoryName) || 
           product.description.includes(this.categoryName)
         );
       }
-      // 返回所有商品
-      return this.products;
+      
+      // 然后按价格排序
+      if (this.priceOrder === 'asc') {
+        result = [...result].sort((a, b) => {
+          const priceA = parseFloat(`${a.price}.${a.priceDecimal || '00'}`);
+          const priceB = parseFloat(`${b.price}.${b.priceDecimal || '00'}`);
+          return priceA - priceB;
+        });
+      } else if (this.priceOrder === 'desc') {
+        result = [...result].sort((a, b) => {
+          const priceA = parseFloat(`${a.price}.${a.priceDecimal || '00'}`);
+          const priceB = parseFloat(`${b.price}.${b.priceDecimal || '00'}`);
+          return priceB - priceA;
+        });
+      }
+      
+      return result;
     }
   },
   methods: {
@@ -142,6 +174,37 @@ export default {
         name: 'ProductDetail',
         params: { id: productId }
       });
+    },
+    toggleFilter(filter) {
+      if (filter === 'price') {
+        if (this.activeFilter === 'price') {
+          // 切换价格排序：无 -> 升序 -> 降序 -> 无
+          if (this.priceOrder === 'none') {
+            this.priceOrder = 'asc';
+          } else if (this.priceOrder === 'asc') {
+            this.priceOrder = 'desc';
+          } else {
+            this.priceOrder = 'none';
+            this.activeFilter = '';
+            return;
+          }
+        } else {
+          this.activeFilter = 'price';
+          this.priceOrder = 'asc';
+        }
+      } else {
+        this.activeFilter = this.activeFilter === filter ? '' : filter;
+      }
+    },
+    getPriceIcon() {
+      if (this.activeFilter !== 'price') return 'fa-chevron-down';
+      if (this.priceOrder === 'asc') return 'fa-arrow-up';
+      if (this.priceOrder === 'desc') return 'fa-arrow-down';
+      return 'fa-chevron-down';
+    },
+    clearFilters() {
+      this.activeFilter = '';
+      this.priceOrder = 'none';
     }
   },
   created() {
@@ -155,157 +218,121 @@ export default {
 
 <style scoped>
 .product-list-container {
-  background-color: #f9f9f9;
+  background-color: var(--neutral-200);
   min-height: 100vh;
-  padding-bottom: 20px;
+  padding-bottom: var(--spacing-xl);
 }
 
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  background: #fff;
+  padding: var(--spacing-md);
+  background: var(--neutral-100);
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: var(--z-index-sticky);
+  box-shadow: var(--shadow-sm);
 }
 
 .back-btn {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   width: 40px;
+  color: var(--neutral-700);
+  transition: color var(--transition-fast);
+}
+
+.back-btn:hover {
+  color: var(--brand-primary);
 }
 
 .category-title {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
   flex-grow: 1;
   text-align: center;
+  color: var(--neutral-800);
 }
 
 .nav-icons {
   display: flex;
-  gap: 20px;
-  font-size: 18px;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-lg);
   width: 40px;
   justify-content: flex-end;
+  color: var(--neutral-700);
 }
 
 .filter-options {
   display: flex;
-  background: #fff;
-  padding: 12px 16px;
-  margin-bottom: 12px;
+  background: var(--neutral-100);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
   overflow-x: auto;
   white-space: nowrap;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--neutral-300);
+  scrollbar-width: none; /* Firefox */
+}
+
+.filter-options::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .filter-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #ddd;
-  margin-right: 8px;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 100px;
+  border: 1px solid var(--neutral-300);
+  margin-right: var(--spacing-sm);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+  color: var(--neutral-700);
 }
 
 .filter-item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--neutral-200);
+  border-color: var(--neutral-400);
+}
+
+.filter-item.active {
+  background-color: var(--brand-accent);
+  border-color: var(--brand-secondary);
+  color: var(--brand-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 0 12px;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-md);
 }
 
-.product-card {
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+@media (min-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    padding: 0 var(--spacing-lg);
+  }
+  
+  .top-nav, .filter-options {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+  
+  .filter-item {
+    font-size: var(--font-size-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+  }
 }
 
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.product-image {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  background-color: #f5f5f5;
-}
-
-.product-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.placeholder-image {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: #bbb;
-  background-color: #f0f0f0;
-}
-
-.product-tag {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 2px 6px;
-  background-color: #ff5000;
-  color: white;
-  font-size: 12px;
-  border-radius: 4px;
-}
-
-.product-info {
-  padding: 10px;
-}
-
-.product-name {
-  margin: 0 0 5px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-}
-
-.product-description {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: #666;
-}
-
-.product-price {
-  margin: 0 0 5px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #ff5000;
-}
-
-.price-decimal {
-  font-size: 12px;
-}
-
-.product-subinfo {
-  margin: 0;
-  font-size: 12px;
-  color: #999;
+@media (min-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 </style> 
