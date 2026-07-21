@@ -1,5 +1,4 @@
 /* 全局样式 */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
 :root {
   --primary-color: #3c2913;
@@ -346,17 +345,17 @@ ul, ol {
   .container {
     padding: var(--container-padding-mobile);
   }
-  
+
   .desktop-only {
     display: none;
   }
-  
+
   .mobile-only {
     display: block;
   }
-  
+
   .btn {
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
   }
-} 
+}

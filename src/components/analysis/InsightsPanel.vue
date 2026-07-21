@@ -6,7 +6,7 @@
         {{ finding }}
       </li>
     </ul>
-    
+
     <h3>营销建议</h3>
     <div class="marketing-tips">
       <div v-for="(tip, index) in marketingTips" :key="index" class="tip-item">
@@ -19,17 +19,16 @@
         </div>
       </div>
     </div>
-    
+
     <h3>行业趋势</h3>
     <p>{{ trendAnalysis }}</p>
   </div>
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
 import { Lightning } from '@element-plus/icons-vue'
 
-const props = defineProps({
+defineProps({
   keyword: {
     type: String,
     required: true
@@ -57,26 +56,26 @@ const props = defineProps({
     padding-bottom: 10px;
     border-bottom: 1px solid #eee;
   }
-  
+
   .findings {
     padding-left: 20px;
-    
+
     li {
       margin-bottom: 10px;
     }
   }
-  
+
   .marketing-tips {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    
+
     .tip-item {
       display: flex;
       background-color: #f9f9f9;
       border-radius: 8px;
       padding: 15px;
-      
+
       .tip-icon {
         display: flex;
         justify-content: center;
@@ -86,21 +85,21 @@ const props = defineProps({
         border-radius: 50%;
         background-color: #409eff;
         margin-right: 15px;
-        
+
         .el-icon {
           color: white;
           font-size: 20px;
         }
       }
-      
+
       .tip-content {
         flex: 1;
-        
+
         h4 {
           margin: 0 0 5px;
           color: #333;
         }
-        
+
         p {
           margin: 0;
           color: #666;
@@ -109,4 +108,4 @@ const props = defineProps({
     }
   }
 }
-</style> 
+</style>

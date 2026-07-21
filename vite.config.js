@@ -1,54 +1,55 @@
 import { fileURLToPath, URL } from 'node:url'
-import legacy from "@vitejs/plugin-legacy"
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-// https://vite.dev/config/
-export default defineConfig({
-  base:'./',
-  plugins: [
-    vue(),
-    legacy({
-      targets: ["ie>=11"],
-      additionalLegacyPolyfills: ["regenerator-runtime/runtime"],
-    })
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const backendTarget = env.BACKEND_API_TARGET || 'http://127.0.0.1:3000'
+  const aiTarget = env.AI_API_TARGET || 'http://127.0.0.1:8000'
+  const imageTarget = env.IMAGE_API_TARGET || 'http://127.0.0.1:9000'
+
+  return {
+    base: './',
+    plugins: [
+      vue(),
+      AutoImport({ resolvers: [ElementPlusResolver()], dts: false }),
+      Components({ resolvers: [ElementPlusResolver()], dts: false })
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
     },
-  },
-  // 添加代理配置解决CORS问题
-  server: {
-    host: '0.0.0.0',  // 允许外部IP访问
-    port: 5173,       // 指定端口
-    strictPort: true, // 如果端口已被占用，则会直接退出
-    cors: true,       // 启用CORS
-    hmr: {
-      // 解决WebSocket连接问题
-      host: '121.41.225.168', // 替换为您的实际服务器IP
-      protocol: 'ws',
+    server: {
+      host: env.DEV_HOST || '127.0.0.1',
       port: 5173,
-      clientPort: 5173
+      strictPort: true,
+      proxy: {
+        '/generate': { target: imageTarget, changeOrigin: true, timeout: 120000 },
+        '/outputs': { target: imageTarget, changeOrigin: true, timeout: 120000 },
+        '/api/auth': { target: backendTarget, changeOrigin: true },
+        '/api/users': { target: backendTarget, changeOrigin: true },
+        '/api/works': { target: backendTarget, changeOrigin: true },
+        '/api/reviews': { target: backendTarget, changeOrigin: true },
+        '/api/merchant': { target: backendTarget, changeOrigin: true },
+        '/api': { target: aiTarget, changeOrigin: true, timeout: 120000 }
+      }
     },
-    proxy: {
-      // 将/generate路径的请求代理到目标服务器
-      '/generate': {
-        target: 'http://121.4.99.231:8000',
-        changeOrigin: true,
-        timeout: 1200000
-      },
-      // 将/outputs路径的请求代理到目标服务器
-      '/outputs': {
-        target: 'http://121.4.99.231:8000',
-        changeOrigin: true,
-        timeout: 1200000
-      },
-      // 将/api路径的请求代理到后端服务器
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        timeout: 120000
+    build: {
+      sourcemap: false,
+      chunkSizeWarningLimit: 750,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/echarts')) return 'charts'
+            if (id.includes('node_modules/vue') || id.includes('node_modules/pinia')) {
+              return 'vue-vendor'
+            }
+          }
+        }
       }
     }
   }

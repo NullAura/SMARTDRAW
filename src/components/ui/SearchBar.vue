@@ -18,7 +18,12 @@
         class="suggestion-item touch-feedback"
         @click="selectSuggestion(item)"
       >
-        <span v-html="highlightKeyword(item)"></span>
+        <span>
+          <template v-for="(part, partIndex) in highlightParts(item)" :key="partIndex">
+            <strong v-if="part.highlighted" class="highlight">{{ part.text }}</strong>
+            <template v-else>{{ part.text }}</template>
+          </template>
+        </span>
       </div>
     </div>
   </div>
@@ -90,14 +95,30 @@ export default {
       });
     },
     
-    highlightKeyword(text) {
-      if (!this.keyword) return text;
-      const regex = new RegExp(`(${this.escapeRegExp(this.keyword)})`, 'gi');
-      return text.replace(regex, '<strong class="highlight">$1</strong>');
-    },
-    
-    escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    highlightParts(text) {
+      const keyword = this.keyword.trim();
+      if (!keyword) return [{ text, highlighted: false }];
+
+      const lowerText = text.toLocaleLowerCase();
+      const lowerKeyword = keyword.toLocaleLowerCase();
+      const parts = [];
+      let cursor = 0;
+      let matchIndex = lowerText.indexOf(lowerKeyword, cursor);
+
+      while (matchIndex !== -1) {
+        if (matchIndex > cursor) {
+          parts.push({ text: text.slice(cursor, matchIndex), highlighted: false });
+        }
+        const matchEnd = matchIndex + keyword.length;
+        parts.push({ text: text.slice(matchIndex, matchEnd), highlighted: true });
+        cursor = matchEnd;
+        matchIndex = lowerText.indexOf(lowerKeyword, cursor);
+      }
+
+      if (cursor < text.length) {
+        parts.push({ text: text.slice(cursor), highlighted: false });
+      }
+      return parts;
     }
   },
   beforeUnmount() {
@@ -188,4 +209,4 @@ export default {
     right: var(--spacing-sm);
   }
 }
-</style> 
+</style>

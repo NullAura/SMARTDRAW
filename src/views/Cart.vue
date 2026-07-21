@@ -51,12 +51,12 @@
 
           <!-- 购物车商品列表 -->
           <div class="cart-items">
-            <div 
-              v-for="(item, index) in cartItems" 
-              :key="item.id" 
+            <div
+              v-for="(item, index) in cartItems"
+              :key="item.id"
               class="cart-item-wrapper"
             >
-              <div 
+              <div
                 class="cart-item"
                 :style="{ transform: `translateX(${item.offset}px)` }"
                 @touchstart="touchStart($event, index)"
@@ -108,8 +108,8 @@
         <div class="recommendations">
           <div class="section-title">猜你喜欢</div>
           <div class="recommendations-grid">
-            <div 
-              v-for="(product, index) in recommendedProducts" 
+            <div
+              v-for="(product, index) in recommendedProducts"
               :key="index"
               class="recommended-product"
               @click="goToProductDetail(product.id)"
@@ -154,6 +154,14 @@
 <script>
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
+
+const stripCartUiState = item => {
+  const cleanItem = { ...item }
+  delete cleanItem.offset
+  delete cleanItem.deleting
+  delete cleanItem.height
+  return cleanItem
+}
 
 export default {
   name: 'Cart',
@@ -215,12 +223,12 @@ export default {
     touchStart(event, index) {
       // 防止点击事件冒泡
       event.stopPropagation();
-      
+
       // 记录触摸起始位置和当前操作的商品索引
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;
       this.currentIndex = index;
-      
+
       // 重置所有其他商品的左滑状态
       this.cartItems.forEach((item, idx) => {
         if (idx !== index) {
@@ -230,39 +238,39 @@ export default {
     },
     touchMove(event, index) {
       if (this.currentIndex !== index) return;
-      
+
       const touchX = event.touches[0].clientX;
       const touchY = event.touches[0].clientY;
-      
+
       // 计算水平和垂直移动的距离
       const moveX = this.touchStartX - touchX;
       const moveY = Math.abs(this.touchStartY - touchY);
-      
+
       // 如果垂直移动更明显，则不处理左滑
       if (moveY > Math.abs(moveX)) return;
-      
+
       // 计算水平偏移量，仅限制左滑（不允许右滑）
       const offset = Math.min(0, -moveX);
-      
+
       // 限制最大左滑距离
       const maxOffset = -160;
       const limitedOffset = Math.max(maxOffset, offset);
-      
+
       // 更新当前项的偏移
       this.cartItems[index].offset = limitedOffset;
     },
     touchEnd(index) {
       if (this.currentIndex !== index) return;
-      
+
       const item = this.cartItems[index];
-      
+
       // 如果左滑距离超过阈值，则展开操作按钮
       if (item.offset < -this.swipeThreshold) {
         item.offset = -160; // 完全展开操作按钮
       } else {
         item.offset = 0; // 否则恢复原位
       }
-      
+
       this.currentIndex = -1;
     },
     findSimilar(item) {
@@ -278,28 +286,28 @@ export default {
     },
     deleteItem(index) {
       const removedItem = this.cartItems[index];
-      
+
       // 确认删除
       if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
         try {
           // 标记为删除中状态，用于动画
-          this.$set(this.cartItems[index], 'deleting', true);
-          
+          this.cartItems[index].deleting = true;
+
           // 使用setTimeout延迟实际删除，以便动画有时间执行
           setTimeout(() => {
             // 直接从数组中移除项目
             this.cartItems = this.cartItems.filter((_, i) => i !== index);
-            
+
             // 直接写入localStorage
-            const dataToSave = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+            const dataToSave = this.cartItems.map(stripCartUiState);
             localStorage.setItem('cartItems', JSON.stringify(dataToSave));
-            
+
             // 手动触发购物车数量更新
             localStorage.setItem('cartUpdated', Date.now().toString());
-            
+
             // 更新总价
             this.updateTotal();
-            
+
             showToast({
               message: `已删除"${removedItem.name}"`,
               type: 'success'
@@ -311,16 +319,16 @@ export default {
             message: '删除失败，请重试',
             type: 'fail'
           });
-          
+
           // 删除失败恢复状态
-          this.$set(this.cartItems[index], 'deleting', false);
+          this.cartItems[index].deleting = false;
         }
       } else {
         // 取消删除，恢复卡片位置
         this.cartItems[index].offset = 0;
       }
     },
-    
+
     // 备用删除方法，不使用动画直接删除
     directDeleteItem(index) {
       try {
@@ -335,31 +343,31 @@ export default {
         }
 
         const removedItem = this.cartItems[index];
-        
+
         // 确认删除
         if (confirm(`确定要删除"${removedItem.name}"吗？`)) {
           // 先取消任何可能的左滑状态
           this.cartItems.forEach(item => item.offset = 0);
-          
+
           // 克隆数组，避免直接修改原数组
           const updatedItems = [...this.cartItems];
-          
+
           // 从数组中移除该项
           updatedItems.splice(index, 1);
-          
+
           // 更新购物车数组
           this.cartItems = updatedItems;
-          
+
           // 移除offset等UI属性并保存到localStorage
-          const cleanItems = this.cartItems.map(({ offset, deleting, height, ...item }) => item);
+          const cleanItems = this.cartItems.map(stripCartUiState);
           localStorage.setItem('cartItems', JSON.stringify(cleanItems));
-          
+
           // 触发更新事件
           localStorage.setItem('cartUpdated', Date.now().toString());
-          
+
           // 更新总价
           this.updateTotal();
-          
+
           showToast({
             message: `已删除"${removedItem.name}"`,
             type: 'success'
@@ -419,7 +427,7 @@ export default {
         .reduce((total, item) => {
           return total + (parseFloat(item.price + '.' + item.priceDecimal) * item.quantity);
         }, 0);
-      
+
       // 计算折扣：假设满300减30
       this.discount = this.totalPrice >= 300 ? 30 : 0;
     },
@@ -441,18 +449,18 @@ export default {
     getCartData() {
       try {
         const cartData = localStorage.getItem('cartItems');
-        
+
         // 如果没有购物车数据，初始化为空数组
         if (!cartData) {
           this.cartItems = [];
           return;
         }
-        
+
         // 尝试解析购物车数据
         let parsedData = [];
         try {
           parsedData = JSON.parse(cartData);
-          
+
           // 确保解析结果是数组
           if (!Array.isArray(parsedData)) {
             console.error("购物车数据不是有效的数组格式，重置为空数组");
@@ -464,16 +472,16 @@ export default {
           parsedData = [];
           localStorage.setItem('cartItems', JSON.stringify([]));
         }
-        
+
         // 过滤掉无效数据，确保每个商品都有必要的字段
-        parsedData = parsedData.filter(item => 
-          item && 
-          typeof item === 'object' && 
-          item.id && 
-          item.name && 
+        parsedData = parsedData.filter(item =>
+          item &&
+          typeof item === 'object' &&
+          item.id &&
+          item.name &&
           item.price
         );
-        
+
         // 为每个商品添加必要的UI属性
         this.cartItems = parsedData.map(item => ({
           ...item,
@@ -484,7 +492,7 @@ export default {
           // 确保选中状态是布尔值
           selected: typeof item.selected === 'boolean' ? item.selected : true
         }));
-        
+
       } catch (error) {
         console.error('获取购物车数据时出错，重置为空购物车:', error);
         this.cartItems = [];
@@ -494,25 +502,25 @@ export default {
         this.updateTotal();
       }
     },
-    
+
     // 保存购物车数据到localStorage
     saveCartData() {
       try {
         // 过滤掉可能的无效数据
-        const validItems = this.cartItems.filter(item => 
-          item && 
-          typeof item === 'object' && 
-          item.id && 
-          item.name && 
+        const validItems = this.cartItems.filter(item =>
+          item &&
+          typeof item === 'object' &&
+          item.id &&
+          item.name &&
           item.price
         );
-        
+
         // 在保存前去除UI相关属性
-        const dataToSave = validItems.map(({ offset, deleting, height, ...item }) => item);
-        
+        const dataToSave = validItems.map(stripCartUiState);
+
         // 保存到localStorage
         localStorage.setItem('cartItems', JSON.stringify(dataToSave));
-        
+
         // 触发购物车更新事件
         localStorage.setItem('cartUpdated', Date.now().toString());
       } catch (error) {
@@ -950,4 +958,4 @@ export default {
 .delete {
   background-color: #ff3b30;
 }
-</style> 
+</style>

@@ -1,7 +1,7 @@
 <template>
   <div class="data-analysis-container">
     <h1 class="page-title">大数据分析中心</h1>
-    
+
     <el-card class="dashboard-card">
       <template #header>
         <div class="card-header">
@@ -11,7 +11,7 @@
           </el-button>
         </div>
       </template>
-      
+
       <div class="dashboard-summary">
         <el-row :gutter="20">
           <el-col :xs="24" :sm="12" :md="8" :lg="6">
@@ -25,7 +25,7 @@
               </div>
             </div>
           </el-col>
-          
+
           <el-col :xs="24" :sm="12" :md="8" :lg="6">
             <div class="data-card">
               <div class="data-icon views">
@@ -37,7 +37,7 @@
               </div>
             </div>
           </el-col>
-          
+
           <el-col :xs="24" :sm="12" :md="8" :lg="6">
             <div class="data-card">
               <div class="data-icon likes">
@@ -49,7 +49,7 @@
               </div>
             </div>
           </el-col>
-          
+
           <el-col :xs="24" :sm="12" :md="8" :lg="6">
             <div class="data-card">
               <div class="data-icon comments">
@@ -64,7 +64,7 @@
         </el-row>
       </div>
     </el-card>
-    
+
     <!-- 热点分析图表 -->
     <el-row :gutter="20" class="chart-row">
       <el-col :xs="24" :lg="12">
@@ -77,7 +77,7 @@
           <div ref="categoryChartRef" class="chart-container"></div>
         </el-card>
       </el-col>
-      
+
       <el-col :xs="24" :lg="12">
         <el-card class="chart-card">
           <template #header>
@@ -89,7 +89,7 @@
         </el-card>
       </el-col>
     </el-row>
-    
+
     <!-- 热门话题列表 -->
     <el-card class="topic-list-card">
       <template #header>
@@ -103,7 +103,7 @@
           </el-select>
         </div>
       </template>
-      
+
       <el-table :data="filteredTopics" style="width: 100%" v-loading="loading">
         <el-table-column prop="rank" label="排名" width="80" />
         <el-table-column prop="title" label="话题标题">
@@ -138,7 +138,7 @@
           </template>
         </el-table-column>
       </el-table>
-      
+
       <div class="pagination-container">
         <el-pagination
           background
@@ -150,7 +150,7 @@
         />
       </div>
     </el-card>
-    
+
     <!-- 话题详情对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -166,7 +166,7 @@
             <span>发布时间: {{ selectedTopic.publishDate }}</span>
           </div>
         </div>
-        
+
         <div class="topic-stats">
           <div class="stat-item">
             <el-icon><View /></el-icon>
@@ -185,12 +185,12 @@
             <span>{{ formatNumber(selectedTopic.shares) }} 分享</span>
           </div>
         </div>
-        
+
         <div class="topic-content">
           <h3>内容摘要</h3>
           <p>{{ selectedTopic.description }}</p>
         </div>
-        
+
         <div class="topic-keywords">
           <h3>关键词分析</h3>
           <div class="keyword-cloud">
@@ -205,7 +205,7 @@
             </el-tag>
           </div>
         </div>
-        
+
         <div class="topic-comments">
           <h3>热门评论</h3>
           <div class="comment-list">
@@ -223,7 +223,7 @@
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">关闭</el-button>
@@ -246,7 +246,6 @@ import {
   TitleComponent, TooltipComponent, LegendComponent, GridComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import TrendChart from '@/components/analysis/TrendChart.vue'
 
 // 注册 ECharts 组件
 echarts.use([
@@ -277,16 +276,16 @@ let trendChart = null
 const totalTopics = computed(() => hotTopics.value.length)
 const filteredTopics = computed(() => {
   let result = [...hotTopics.value]
-  
+
   // 根据筛选条件过滤
   if (topicFilter.value !== 'all') {
     result = result.filter(topic => topic.category === topicFilter.value)
   }
-  
+
   // 分页
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  
+
   return result.slice(start, end)
 })
 
@@ -356,7 +355,7 @@ const initCharts = () => {
       categoryChart = echarts.init(categoryChartRef.value)
       updateCategoryChart()
     }
-    
+
     // 初始化趋势图表
     if (trendChartRef.value) {
       trendChart = echarts.init(trendChartRef.value)
@@ -417,7 +416,7 @@ const updateCategoryChart = () => {
       }
     ]
   }
-  
+
   categoryChart.setOption(option)
 }
 
@@ -474,7 +473,7 @@ const updateTrendChart = () => {
       }
     ]
   }
-  
+
   trendChart.setOption(option)
 }
 
@@ -494,7 +493,7 @@ const fetchAnalyticsData = async () => {
       totalViews.value = 24568790
       totalLikes.value = 9876543
       totalComments.value = 2187654
-      
+
       // 模拟热门话题数据
       hotTopics.value = [
         {
@@ -603,7 +602,7 @@ const fetchAnalyticsData = async () => {
           topComments: []
         }
       ]
-      
+
       // 补充样本数据至20条
       for(let i = 5; i <= 20; i++) {
         hotTopics.value.push({
@@ -621,7 +620,7 @@ const fetchAnalyticsData = async () => {
           topComments: []
         })
       }
-      
+
       resolve({ success: true })
     }, 1000)
   })
@@ -631,10 +630,10 @@ const fetchAnalyticsData = async () => {
 onMounted(async () => {
   // 加载数据
   await refreshData()
-  
+
   // 初始化图表
   initCharts()
-  
+
   // 添加窗口大小改变监听
   window.addEventListener('resize', handleResize)
 })
@@ -643,7 +642,7 @@ onUnmounted(() => {
   // 销毁图表实例
   if (categoryChart) categoryChart.dispose()
   if (trendChart) trendChart.dispose()
-  
+
   // 移除事件监听
   window.removeEventListener('resize', handleResize)
 })
@@ -652,25 +651,25 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .data-analysis-container {
   padding: 20px;
-  
+
   .page-title {
     margin-bottom: 20px;
     color: #333;
     font-weight: 600;
   }
-  
+
   .dashboard-card {
     margin-bottom: 20px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .dashboard-summary {
       margin-top: 10px;
-      
+
       .data-card {
         display: flex;
         padding: 15px;
@@ -678,7 +677,7 @@ onUnmounted(() => {
         background-color: #f9f9f9;
         margin-bottom: 15px;
         box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-        
+
         .data-icon {
           width: 60px;
           height: 60px;
@@ -687,39 +686,39 @@ onUnmounted(() => {
           align-items: center;
           justify-content: center;
           margin-right: 15px;
-          
+
           .el-icon {
             font-size: 24px;
             color: white;
           }
-          
+
           &.hot {
             background-color: #f56c6c;
           }
-          
+
           &.views {
             background-color: #409eff;
           }
-          
+
           &.likes {
             background-color: #67c23a;
           }
-          
+
           &.comments {
             background-color: #e6a23c;
           }
         }
-        
+
         .data-info {
           flex: 1;
-          
+
           h3 {
             margin: 0;
             font-size: 24px;
             font-weight: 600;
             line-height: 1.2;
           }
-          
+
           p {
             margin: 5px 0 0;
             color: #909399;
@@ -728,52 +727,52 @@ onUnmounted(() => {
       }
     }
   }
-  
+
   .chart-row {
     margin-bottom: 20px;
-    
+
     .chart-card {
       margin-bottom: 20px;
-      
+
       .chart-container {
         height: 400px;
       }
     }
   }
-  
+
   .topic-list-card {
     margin-bottom: 20px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .topic-title {
       display: flex;
       align-items: center;
-      
+
       .el-tag {
         margin-right: 10px;
       }
     }
-    
+
     .pagination-container {
       margin-top: 20px;
       display: flex;
       justify-content: center;
     }
   }
-  
+
   .topic-details {
     .topic-header {
       margin-bottom: 20px;
-      
+
       h2 {
         margin: 0 0 10px;
       }
-      
+
       .topic-meta {
         display: flex;
         align-items: center;
@@ -782,60 +781,60 @@ onUnmounted(() => {
         color: #909399;
       }
     }
-    
+
     .topic-stats {
       display: flex;
       margin-bottom: 20px;
       background-color: #f9f9f9;
       border-radius: 8px;
       padding: 15px;
-      
+
       .stat-item {
         display: flex;
         align-items: center;
         margin-right: 30px;
-        
+
         .el-icon {
           margin-right: 5px;
           color: #409eff;
         }
       }
     }
-    
+
     .topic-content, .topic-keywords, .topic-comments {
       margin-bottom: 20px;
-      
+
       h3 {
         margin-top: 0;
         padding-bottom: 10px;
         border-bottom: 1px solid #eee;
       }
     }
-    
+
     .keyword-cloud {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      
+
       .keyword-tag {
         margin-bottom: 5px;
       }
     }
-    
+
     .comment-list {
       .comment-item {
         border-bottom: 1px solid #eee;
         padding: 15px 0;
-        
+
         &:last-child {
           border-bottom: none;
         }
-        
+
         .comment-user {
           display: flex;
           align-items: center;
           margin-bottom: 10px;
-          
+
           .user-avatar {
             width: 40px;
             height: 40px;
@@ -843,17 +842,17 @@ onUnmounted(() => {
             margin-right: 10px;
             background-color: #eee; // 默认背景
           }
-          
+
           .username {
             font-weight: 600;
           }
         }
-        
+
         .comment-content {
           margin-bottom: 10px;
           line-height: 1.5;
         }
-        
+
         .comment-meta {
           display: flex;
           justify-content: space-between;
@@ -870,7 +869,7 @@ onUnmounted(() => {
   .data-analysis-container {
     .topic-stats {
       flex-direction: column;
-      
+
       .stat-item {
         margin-right: 0;
         margin-bottom: 10px;
@@ -878,4 +877,4 @@ onUnmounted(() => {
     }
   }
 }
-</style> 
+</style>

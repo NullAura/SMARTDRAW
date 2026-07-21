@@ -4,7 +4,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { icons, createIcon } from '../assets/svg/icons.js'
+import { createIcon } from '../assets/svg/icons.js'
 
 const props = defineProps({
   name: {
@@ -38,11 +38,11 @@ const styles = computed(() => {
     display: 'inline-flex',
     verticalAlign: 'middle'
   }
-  
+
   if (props.animation) {
     style.animation = `${props.animation} ${props.delay ? props.delay + 's' : '0s'}`
   }
-  
+
   return style
 })
 </script>
@@ -53,4 +53,4 @@ const styles = computed(() => {
   align-items: center;
   justify-content: center;
 }
-</style> 
+</style>

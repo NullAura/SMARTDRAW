@@ -1,154 +1,136 @@
 const express = require('express');
-const router = express.Router();
+const mongoose = require('mongoose');
 const Work = require('../models/Work');
 const { auth, isDesigner } = require('../middleware/auth');
 
-// 创建作品
-router.post('/', auth, isDesigner, async (req, res) => {
+const router = express.Router();
+const WRITABLE_FIELDS = ['title', 'description', 'category', 'coverImage', 'files', 'status', 'tags'];
+
+router.param('id', (req, res, next, id) => {
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return res.status(400).json({ success: false, message: '作品 ID 格式无效' });
+  }
+  return next();
+});
+
+router.get('/mine', auth, isDesigner, async (req, res, next) => {
   try {
-    const work = new Work({
-      ...req.body,
-      designer: req.user._id
-    });
-    await work.save();
-    res.status(201).json(work);
+    const works = await Work.find({ designer: req.user._id }).sort({ createdAt: -1 });
+    return res.json({ success: true, data: works });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 获取作品列表
-router.get('/', async (req, res) => {
+router.post('/', auth, isDesigner, async (req, res, next) => {
   try {
-    const { category, status, designer, tag } = req.query;
-    const query = {};
+    const values = Object.fromEntries(
+      WRITABLE_FIELDS.filter(field => field in (req.body || {})).map(field => [field, req.body[field]])
+    );
+    const work = await Work.create({ ...values, designer: req.user._id });
+    return res.status(201).json({ success: true, data: work });
+  } catch (error) {
+    return next(error);
+  }
+});
 
-    if (category) query.category = category;
-    if (status) query.status = status;
-    if (designer) query.designer = designer;
-    if (tag) query.tags = tag;
+router.get('/', async (req, res, next) => {
+  try {
+    const query = { status: 'published' };
+    if (req.query.category) query.category = req.query.category;
+    if (req.query.designer && mongoose.isObjectIdOrHexString(req.query.designer)) {
+      query.designer = req.query.designer;
+    }
+    if (req.query.tag) query.tags = req.query.tag;
 
     const works = await Work.find(query)
       .populate('designer', 'username')
-      .sort({ createdAt: -1 });
-
-    res.json(works);
+      .sort({ createdAt: -1 })
+      .limit(100);
+    return res.json({ success: true, data: works });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 获取单个作品
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   try {
-    const work = await Work.findById(req.params.id)
+    const work = await Work.findOneAndUpdate(
+      { _id: req.params.id, status: 'published' },
+      { $inc: { views: 1 } },
+      { new: true }
+    )
       .populate('designer', 'username')
       .populate('comments.user', 'username');
-    
-    if (!work) {
-      return res.status(404).json({ message: '作品不存在' });
-    }
-
-    // 增加浏览量
-    work.views += 1;
-    await work.save();
-
-    res.json(work);
+    if (!work) return res.status(404).json({ success: false, message: '作品不存在' });
+    return res.json({ success: true, data: work });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 更新作品
-router.patch('/:id', auth, isDesigner, async (req, res) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ['title', 'description', 'category', 'coverImage', 'files', 'status', 'tags'];
-  const isValidOperation = updates.every(update => allowedUpdates.includes(update));
-
-  if (!isValidOperation) {
-    return res.status(400).json({ message: '无效的更新字段' });
+router.patch('/:id', auth, isDesigner, async (req, res, next) => {
+  const updates = Object.keys(req.body || {});
+  if (!updates.length || !updates.every(field => WRITABLE_FIELDS.includes(field))) {
+    return res.status(400).json({ success: false, message: '包含无效的更新字段' });
   }
-
   try {
     const work = await Work.findById(req.params.id);
-    if (!work) {
-      return res.status(404).json({ message: '作品不存在' });
+    if (!work) return res.status(404).json({ success: false, message: '作品不存在' });
+    if (!work.designer.equals(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '没有权限更新此作品' });
     }
-
-    // 检查权限
-    if (work.designer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: '没有权限更新此作品' });
-    }
-
-    updates.forEach(update => work[update] = req.body[update]);
+    for (const field of updates) work[field] = req.body[field];
     await work.save();
-
-    res.json(work);
+    return res.json({ success: true, data: work });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 删除作品
-router.delete('/:id', auth, isDesigner, async (req, res) => {
+router.delete('/:id', auth, isDesigner, async (req, res, next) => {
   try {
     const work = await Work.findById(req.params.id);
-    if (!work) {
-      return res.status(404).json({ message: '作品不存在' });
+    if (!work) return res.status(404).json({ success: false, message: '作品不存在' });
+    if (!work.designer.equals(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '没有权限删除此作品' });
     }
-
-    // 检查权限
-    if (work.designer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: '没有权限删除此作品' });
-    }
-
-    await work.remove();
-    res.json({ message: '作品已删除' });
+    await work.deleteOne();
+    return res.json({ success: true, message: '作品已删除' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 点赞作品
-router.post('/:id/like', auth, async (req, res) => {
+router.post('/:id/like', auth, async (req, res, next) => {
   try {
-    const work = await Work.findById(req.params.id);
-    if (!work) {
-      return res.status(404).json({ message: '作品不存在' });
-    }
-
-    const isLiked = work.likes.includes(req.user._id);
-    if (isLiked) {
-      work.likes = work.likes.filter(id => id.toString() !== req.user._id.toString());
-    } else {
-      work.likes.push(req.user._id);
-    }
-
-    await work.save();
-    res.json({ message: isLiked ? '取消点赞成功' : '点赞成功' });
+    const work = await Work.findOne({ _id: req.params.id, status: 'published' });
+    if (!work) return res.status(404).json({ success: false, message: '作品不存在' });
+    const isLiked = work.likes.some(id => id.equals(req.user._id));
+    const operation = isLiked ? '$pull' : '$addToSet';
+    await Work.updateOne({ _id: work._id }, { [operation]: { likes: req.user._id } });
+    return res.json({ success: true, message: isLiked ? '已取消点赞' : '点赞成功' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 评论作品
-router.post('/:id/comments', auth, async (req, res) => {
+router.post('/:id/comments', auth, async (req, res, next) => {
+  const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+  if (!content || content.length > 1000) {
+    return res.status(400).json({ success: false, message: '评论需为 1–1000 个字符' });
+  }
   try {
-    const work = await Work.findById(req.params.id);
-    if (!work) {
-      return res.status(404).json({ message: '作品不存在' });
-    }
-
-    work.comments.push({
-      user: req.user._id,
-      content: req.body.content
-    });
-
-    await work.save();
-    res.status(201).json(work);
+    const work = await Work.findOneAndUpdate(
+      { _id: req.params.id, status: 'published' },
+      { $push: { comments: { user: req.user._id, content } } },
+      { new: true, runValidators: true }
+    );
+    if (!work) return res.status(404).json({ success: false, message: '作品不存在' });
+    return res.status(201).json({ success: true, data: work });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -308,6 +308,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast } from 'vant'
 import 'vant/es/toast/style'
+import { AI_API_BASE_URL, buildUrl } from '@/config'
 
 // 响应式状态
 const sidebarOpen = ref(false)
@@ -1446,29 +1447,21 @@ const originalPrompt = ref('')
 
 // 润色提示词
 const polishPrompt = async () => {
-  console.log('润色按钮被点击，当前提示词:', prompt.value);
-  
   if (!prompt.value) {
-    console.log('提示词为空，显示错误提示');
     showToast('请输入提示词', 'error');
     return;
   }
   
   if (isPolishing.value) {
-    console.log('正在润色中，忽略重复点击');
     showToast('正在润色中，请稍候', 'warning');
     return;
   }
   
-  console.log('开始润色流程');
   isPolishing.value = true;
   const toast = showToast('正在润色中...', 'loading');
   
   try {
-    console.log('准备发送请求到 /api/polish');
-    console.log('请求数据:', { prompt: prompt.value });
-    
-    const response = await fetch('/api/polish', {
+    const response = await fetch(buildUrl(AI_API_BASE_URL, '/api/polish'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1476,9 +1469,6 @@ const polishPrompt = async () => {
       },
       body: JSON.stringify({ prompt: prompt.value })
     });
-    
-    console.log('收到响应，状态码:', response.status);
-    console.log('响应头:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -1491,8 +1481,6 @@ const polishPrompt = async () => {
     }
     
     const data = await response.json();
-    console.log('润色成功，返回数据:', data);
-    
     if (data.polished_prompt) {
       originalPrompt.value = prompt.value;
       prompt.value = data.polished_prompt;
@@ -1529,56 +1517,6 @@ const handleStorageChange = (e) => {
   }
 }
 
-const rating = ref(0)
-const reviewText = ref('')
-
-const setRating = (value) => {
-  rating.value = value
-}
-
-const submitReview = async () => {
-  try {
-    if (!rating.value || !reviewText.value.trim()) {
-      showToast({
-        message: '请完成评分和评价内容',
-        type: 'fail'
-      })
-      return
-    }
-
-    const response = await fetch('/api/review', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        rating: rating.value,
-        review: reviewText.value.trim(),
-        imageUrl: replaceImages.value[0].preview
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error('提交评价失败')
-    }
-
-    showToast({
-      message: '评价提交成功！',
-      type: 'success'
-    })
-
-    // 重置评价表单
-    rating.value = 0
-    reviewText.value = ''
-  } catch (error) {
-    console.error('提交评价失败:', error)
-    showToast({
-      message: '提交评价失败，请重试',
-      type: 'fail'
-    })
-  }
-}
-
 const isGettingAIReview = ref(false)
 const aiReview = ref('')
 const loading = ref(false)
@@ -1604,7 +1542,7 @@ const getAIReview = async () => {
     const formData = new FormData()
     formData.append('file', file)
 
-    const result = await fetch('http://121.41.225.168:8000/api/openai_review', {
+    const result = await fetch(buildUrl(AI_API_BASE_URL, '/api/openai_review'), {
       method: 'POST',
       body: formData
     })
@@ -1665,12 +1603,12 @@ const dragCartItem = (event, item) => {
 }
 
 // 处理拖拽经过替换家具区域的效果
-const handleDragOver = (event) => {
+const handleDragOver = () => {
   isDraggingOver.value = true
 }
 
 // 处理拖拽离开替换家具区域的效果
-const handleDragLeave = (event) => {
+const handleDragLeave = () => {
   isDraggingOver.value = false
 }
 

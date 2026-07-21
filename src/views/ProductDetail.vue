@@ -149,7 +149,7 @@
             <i class="fas fa-chevron-right"></i>
           </div>
         </div>
-        
+
         <!-- 评价内容 -->
         <div class="review-content">
           <div class="reviewer-info">
@@ -187,11 +187,11 @@
         <div class="detail-section">
           <h3>产品特点</h3>
           <p>{{ product.features || '这款产品采用优质材料制作，外观简约时尚，功能齐全，使用方便，是您家居生活的理想选择。' }}</p>
-          
+
           <div class="detail-image">
             <div class="placeholder-image-detail">详细图片1</div>
           </div>
-          
+
           <h3>产品规格</h3>
           <div class="specs-table">
             <div class="spec-row">
@@ -247,52 +247,44 @@
 <script>
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import SvgIcon from '../components/SvgIcon.vue';
-import SvgButton from '../components/SvgButton.vue';
-import CartDrawer from '../components/CartDrawer.vue';
 import { useCartStore } from '../stores/cart';
 
 // 导入图片
 import sofa1Image from '../assets/images/sofa1.png';
 
 export default {
-  components: {
-    SvgIcon,
-    SvgButton,
-    CartDrawer
-  },
   setup() {
     const route = useRoute();
     const router = useRouter();
-    
+
     // 创建本地购物车状态，以防 Pinia 未初始化
     const localCart = ref([]);
     let cartStore = null;
-    
+
     // 尝试获取 Pinia store，如果失败则使用本地状态
     try {
       cartStore = useCartStore();
-    } catch (e) {
+    } catch {
       console.warn('Pinia store 未初始化，使用本地购物车状态');
     }
-    
+
     const showCart = ref(false);
     const isAddingToCart = ref(false);
     const showAddedToast = ref(false);
-    
+
     // 获取商品ID
     const productId = computed(() => route.params.id);
-    
+
     // 获取当前商品详情
     const product = ref(null);
     const loading = ref(true);
     const selectedImage = ref(0);
     const isCollected = ref(false);
-    
+
     // 根据productId找到对应的产品数据
     const getProductData = () => {
       loading.value = true;
-      
+
       // 模拟加载延迟
       setTimeout(() => {
         // 查找当前商品
@@ -301,13 +293,13 @@ export default {
         loading.value = false;
       }, 500);
     };
-    
+
     // 商品添加到购物车
     const addToCart = () => {
       if (!product.value) return;
-      
+
       isAddingToCart.value = true;
-      
+
       setTimeout(() => {
         // 使用 Pinia store
         if (cartStore) {
@@ -328,7 +320,7 @@ export default {
               quantity: 1
             });
           }
-          
+
           // 保存到本地存储
           try {
             localStorage.setItem('cartItems', JSON.stringify(localCart.value));
@@ -338,31 +330,31 @@ export default {
             console.error('保存购物车失败', e);
           }
         }
-        
+
         isAddingToCart.value = false;
         showAddedToast.value = true;
-        
+
         // 3秒后隐藏提示
         setTimeout(() => {
           showAddedToast.value = false;
         }, 3000);
       }, 500);
     };
-    
+
     // 打开购物车抽屉
     const openCart = () => {
       showCart.value = true;
     };
-    
+
     // 关闭购物车抽屉
     const closeCart = () => {
       showCart.value = false;
     };
-    
+
     // 立即购买
     const buyNow = () => {
       if (!product.value) return;
-      
+
       // 添加到购物车
       if (cartStore) {
         cartStore.addToCart(product.value);
@@ -381,32 +373,32 @@ export default {
             quantity: 1
           });
         }
-        
+
         try {
           localStorage.setItem('cart', JSON.stringify(localCart.value));
         } catch (e) {
           console.error('保存购物车失败', e);
         }
       }
-      
+
       // 跳转到结算页面，这里暂时跳转到购物车页面
       router.push({ path: '/cart' });
     };
-    
+
     // 收藏/取消收藏
     const toggleCollection = () => {
       isCollected.value = !isCollected.value;
     };
-    
+
     // 返回上一页
     const goBack = () => {
       router.back();
     };
-    
+
     // 生命周期钩子
     onMounted(() => {
       getProductData();
-      
+
       // 如果使用本地购物车，尝试从 localStorage 加载
       if (!cartStore) {
         try {
@@ -419,7 +411,7 @@ export default {
         }
       }
     });
-    
+
     // 商品数据
     const productData = reactive([
       {
@@ -481,7 +473,7 @@ export default {
         imageUrl: sofa1Image
       }
     ]);
-    
+
     return {
       product,
       loading,
@@ -725,21 +717,21 @@ export default {
   .product-detail-container {
     padding-bottom: 0;  /* 桌面端不需要为底部操作栏留出空间 */
   }
-  
+
   .product-content {
     flex-direction: row;
     margin-top: 1rem;
     gap: 2rem;
   }
-  
+
   .product-main {
     flex: 0 0 45%;
   }
-  
+
   .product-info {
     flex: 1;
   }
-  
+
   .bottom-actions {
     position: static;
     margin-top: 1rem;
@@ -747,12 +739,12 @@ export default {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     height: 60px;
   }
-  
+
   .action-item {
     width: 80px;
     font-size: 0.8rem;
   }
-  
+
   .cart-btn, .buy-btn {
     height: 40px;
     padding: 0 30px;
@@ -764,11 +756,11 @@ export default {
   .container {
     padding: var(--container-padding-mobile);
   }
-  
+
   .product-content {
     gap: 0.5rem;
   }
-  
+
   .thumbnail {
     flex: 0 0 50px;
     height: 50px;
@@ -1149,4 +1141,4 @@ export default {
     transform: rotate(360deg);
   }
 }
-</style> 
+</style>

@@ -108,10 +108,8 @@
 
 <script>
 import { ElMessage } from 'element-plus'
-import { API_BASE_URL } from '@/config'
 import { mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
-import anime from 'animejs'
 
 export default {
   name: 'Login',
@@ -162,8 +160,6 @@ export default {
       
       this.loading = true
       try {
-        console.log('开始登录请求...')
-        
         // 根据选择的角色调用不同的登录方法
         const loginResult = this.selectedRole === 'merchant' 
           ? await this.merchantLogin({
@@ -176,27 +172,21 @@ export default {
             })
         
         if (loginResult.success) {
-          console.log('登录成功')
-          
           if (this.formData.remember) {
             localStorage.setItem('rememberedAccount', this.formData.account)
           }
           
           ElMessage.success('登录成功！')
           
-          console.log('准备跳转，当前角色:', this.selectedRole)
-          if (this.selectedRole === 'merchant') {
-            console.log('跳转到商家仪表盘')
-            await this.$router.replace('/merchant/dashboard')
-          } else {
-            console.log('跳转到个人主页')
-            await this.$router.replace('/home')
-          }
+          const fallback = this.selectedRole === 'merchant' ? '/merchant/dashboard' : '/home'
+          const redirect = typeof this.$route.query.redirect === 'string'
+            ? this.$route.query.redirect
+            : fallback
+          await this.$router.replace(redirect)
         } else {
           ElMessage.error(loginResult.message || '登录失败')
         }
       } catch (error) {
-        console.error('登录错误详情:', error)
         if (error.message.includes('Failed to fetch')) {
           ElMessage.error('无法连接到服务器，请检查服务器是否运行')
         } else {
@@ -208,19 +198,19 @@ export default {
     },
     
     handleForgotPassword() {
-      this.$message.info('忘记密码功能开发中...')
+      ElMessage.info('忘记密码功能开发中...')
     },
     
     handleWechatLogin() {
-      this.$message.info('微信登录功能开发中...')
+      ElMessage.info('微信登录功能开发中...')
     },
     
     handleQQLogin() {
-      this.$message.info('QQ登录功能开发中...')
+      ElMessage.info('QQ登录功能开发中...')
     },
     
     handleWeiboLogin() {
-      this.$message.info('微博登录功能开发中...')
+      ElMessage.info('微博登录功能开发中...')
     }
   },
   created() {
@@ -229,79 +219,6 @@ export default {
       this.formData.account = rememberedAccount
       this.formData.remember = true
     }
-  },
-  mounted() {
-    this.$nextTick(() => { // 使用 nextTick 确保 DOM 准备好
-      /* // 暂时注释掉所有动画
-      // 左侧面板动画
-      anime({
-        targets: '.left-panel',
-        translateX: [-100, 0],
-        opacity: [0, 1],
-        duration: 1000,
-        easing: 'easeOutExpo'
-      });
-
-      // 右侧面板动画
-      anime({
-        targets: '.right-panel',
-        translateX: [100, 0],
-        opacity: [0, 1],
-        duration: 1000,
-        easing: 'easeOutExpo',
-        delay: 200 // 稍作延迟
-      });
-
-      // 左侧标题动画
-      anime({
-        targets: '.main-title',
-        translateY: [-30, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeOutQuad',
-        delay: 500
-      });
-      
-      anime({
-        targets: '.sub-title',
-        translateY: [-20, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeOutQuad',
-        delay: 600
-      });
-
-      // 左侧特性列表动画
-      anime({
-        targets: '.feature-item',
-        translateY: [20, 0],
-        opacity: [0, 1],
-        duration: 600,
-        easing: 'easeOutQuad',
-        delay: anime.stagger(100, {start: 700})
-      });
-
-      // 登录框动画
-      anime({
-        targets: '.login-box',
-        translateY: [50, 0],
-        opacity: [0, 1],
-        duration: 1000,
-        easing: 'easeOutExpo',
-        delay: 400 
-      });
-
-      // 登录框内元素动画
-      anime({
-        targets: ['.welcome-text', '.login-desc', '.role-selector', '.input-group', '.options', '.login-btn', '.register-link', '.third-party'],
-        translateY: [20, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeOutQuad',
-        delay: anime.stagger(80, {start: 600})
-      });
-      */
-    }); // 结束 nextTick
   }
 }
 </script>
@@ -355,7 +272,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url("../assets/backgrounds/background.jpg") center/cover no-repeat;
+  background: url("../assets/backgrounds/background.webp") center/cover no-repeat;
   opacity: 0.15;
   z-index: 0;
 }

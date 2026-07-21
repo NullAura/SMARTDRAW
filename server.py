@@ -1,353 +1,284 @@
-import os
-from waitress import serve
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import logging
-import requests
-import json
-import time
-import traceback
-from datetime import datetime
-from colorama import init, Fore, Back, Style
-import socket
-import dns.resolver
+"""SmartDraw AI gateway.
+
+Credentials are loaded from ``server/.env`` or the process environment and are
+never sent to the browser.
+"""
+
+from __future__ import annotations
+
 import base64
+import logging
+import os
+import uuid
+from pathlib import Path
+from typing import Any
 
-# 初始化colorama
-init(autoreset=True)
+import requests
+from dotenv import load_dotenv
+from flask import Flask, g, jsonify, request
+from flask_cors import CORS
+from waitress import serve
 
-# 配置日志
+PROJECT_ROOT = Path(__file__).resolve().parent
+load_dotenv(PROJECT_ROOT / "server" / ".env")
+
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s [%(levelname)s] %(message)s",
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("smartdraw.ai")
+
+
+def env_int(name: str, default: int, minimum: int = 1) -> int:
+    raw_value = os.getenv(name, str(default))
+    try:
+        return max(minimum, int(raw_value))
+    except ValueError as exc:
+        raise RuntimeError(f"环境变量 {name} 必须是整数") from exc
+
+
+def env_list(name: str, default: str) -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
+def endpoint(base_url: str, path: str) -> str:
+    return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
+
+
+HUNYUAN_API_KEY = os.getenv("HUNYUAN_API_KEY", "").strip()
+HUNYUAN_API_BASE_URL = os.getenv(
+    "HUNYUAN_API_BASE_URL", "https://api.hunyuan.cloud.tencent.com/v1"
+).strip()
+HUNYUAN_MODEL = os.getenv("HUNYUAN_MODEL", "hunyuan-turbos-latest").strip()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_API_BASE_URL = os.getenv("OPENAI_API_BASE_URL", "https://api.openai.com/v1").strip()
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna").strip()
+
+MAX_UPLOAD_BYTES = env_int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
+UPSTREAM_TIMEOUT_SECONDS = env_int("UPSTREAM_TIMEOUT_SECONDS", 60)
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 app = Flask(__name__)
-CORS(app)
-
-# 混元API配置
-HUNYUAN_API_KEY = "***REMOVED***"
-HUNYUAN_API_BASE_URL = "https://api.hunyuan.cloud.tencent.com/v1/chat/completions"
-
-# OpenAI API配置
-OPENAI_API_KEY = "***REMOVED***"
-OPENAI_API_BASE_URL = "https://api.gptsapi.net"
-
-def check_network_connection():
-    """检查网络连接状态"""
-    try:
-        # 检查DNS解析
-        resolver = dns.resolver.Resolver()
-        resolver.timeout = 5
-        resolver.lifetime = 5
-        answers = resolver.resolve('api.hunyuan.cloud.tencent.com', 'A')
-        ip_addresses = [str(rdata) for rdata in answers]
-        print(f"{Fore.CYAN}DNS解析结果: {ip_addresses}")
-        
-        # 检查TCP连接
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect((ip_addresses[0], 443))
-        sock.close()
-        return True
-    except Exception as e:
-        print(f"{Fore.RED}网络连接检查失败: {str(e)}")
-        return False
-
-def print_error(error_type, error_message, error_details=None):
-    """在终端打印彩色错误信息"""
-    print(f"\n{Fore.RED}{'='*80}")
-    print(f"{Fore.RED}错误类型: {error_type}")
-    print(f"{Fore.RED}错误信息: {error_message}")
-    if error_details:
-        print(f"{Fore.YELLOW}详细信息:")
-        print(json.dumps(error_details, ensure_ascii=False, indent=2))
-    print(f"{Fore.RED}{'='*80}\n")
-
-@app.route('/api/polish', methods=['POST'])
-def polish_prompt():
-    request_id = f"req_{int(time.time())}_{os.urandom(4).hex()}"
-    print(f"{Fore.GREEN}[{request_id}] 收到润色请求")
-    print(f"{Fore.CYAN}[{request_id}] 请求头信息:", dict(request.headers))
-    
-    try:
-        # 检查网络连接
-        print(f"{Fore.CYAN}[{request_id}] 开始检查网络连接")
-        if not check_network_connection():
-            print(f"{Fore.RED}[{request_id}] 网络连接检查失败")
-            return jsonify({
-                'error': '网络连接异常，请检查网络设置',
-                'request_id': request_id
-            }), 503
-            
-        print(f"{Fore.CYAN}[{request_id}] 开始解析请求数据")
-        data = request.get_json()
-        if not data:
-            print(f"{Fore.RED}[{request_id}] 请求体为空")
-            return jsonify({'error': '请求数据格式错误', 'request_id': request_id}), 400
-            
-        prompt = data.get('prompt')
-        if not prompt:
-            print(f"{Fore.RED}[{request_id}] 提示词为空")
-            return jsonify({'error': '提示词不能为空', 'request_id': request_id}), 400
-            
-        print(f"{Fore.CYAN}[{request_id}] 提示词长度: {len(prompt)} 字符")
-        if len(prompt) > 1000:
-            print(f"{Fore.RED}[{request_id}] 提示词过长: {len(prompt)}字符")
-            return jsonify({'error': '提示词长度不能超过1000个字符', 'request_id': request_id}), 400
-            
-        if not HUNYUAN_API_KEY:
-            print(f"{Fore.RED}[{request_id}] 混元API密钥未配置")
-            return jsonify({'error': '服务器配置错误，请联系管理员', 'request_id': request_id}), 500
-            
-        print(f"{Fore.CYAN}[{request_id}] 开始润色提示词: {prompt[:50]}...")
-        
-        headers = {
-            'Authorization': f'Bearer {HUNYUAN_API_KEY}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0'
-        }
-        
-        payload = {
-            'model': 'hunyuan-turbos-latest',
-            'messages': [
-                {
-                    'role': 'system',
-                    'content': '你是一个专业的家居设计提示词优化助手。请帮我优化以下提示词，使其更加专业、详细和富有创意。保持原有的核心意思，但可以添加更多细节和描述。'
-                },
-                {
-                    'role': 'user',
-                    'content': prompt
-                }
-            ],
-            'temperature': 0.7,
-            'max_tokens': 500,
-            'enable_enhancement': True
-        }
-        
-        print(f"{Fore.CYAN}[{request_id}] 请求参数:")
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-        print(f"{Fore.CYAN}[{request_id}] API URL: {HUNYUAN_API_BASE_URL}")
-        print(f"{Fore.CYAN}[{request_id}] Headers: {json.dumps({k: '***' if k == 'Authorization' else v for k, v in headers.items()}, ensure_ascii=False, indent=2)}")
-        
-        start_time = time.time()
-        try:
-            response = requests.post(
-                HUNYUAN_API_BASE_URL,
-                headers=headers,
-                json=payload,
-                timeout=60,  # 增加超时时间到60秒
-                verify=False  # 临时禁用SSL验证以排除证书问题
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": env_list(
+                "AI_CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"
             )
-        except requests.exceptions.Timeout:
-            error_details = {
-                'request_duration': time.time() - start_time,
-                'endpoint': HUNYUAN_API_BASE_URL,
-                'headers': {k: '***' if k == 'Authorization' else v for k, v in headers.items()}
-            }
-            print_error('请求超时', 'API请求超过60秒未响应', error_details)
-            return jsonify({'error': '请求超时，请稍后再试', 'request_id': request_id}), 504
-        except requests.exceptions.RequestException as e:
-            error_details = {
-                'error_type': type(e).__name__,
-                'error_message': str(e),
-                'request_duration': time.time() - start_time,
-                'endpoint': HUNYUAN_API_BASE_URL
-            }
-            print_error('请求异常', str(e), error_details)
-            return jsonify({'error': '网络错误，请稍后再试', 'request_id': request_id}), 500
-            
-        end_time = time.time()
-        request_duration = end_time - start_time
-        print(f"{Fore.CYAN}[{request_id}] API请求耗时: {request_duration:.2f}秒")
-        
-        if response.status_code != 200:
-            error_details = {
-                'status_code': response.status_code,
-                'response_headers': dict(response.headers),
-                'response_text': response.text,
-                'request_duration': request_duration,
-                'request_url': HUNYUAN_API_BASE_URL,
-                'request_headers': {k: '***' if k == 'Authorization' else v for k, v in headers.items()}
-            }
-            
-            if response.status_code == 429:
-                print_error('请求频率限制', 'API请求过于频繁', error_details)
-                return jsonify({'error': '请求过于频繁，请稍后再试', 'request_id': request_id}), 429
-            elif response.status_code == 401:
-                print_error('认证失败', 'API密钥无效或过期', error_details)
-                return jsonify({'error': 'API认证失败，请联系管理员', 'request_id': request_id}), 500
-            else:
-                print_error('服务错误', f'API返回错误状态码: {response.status_code}', error_details)
-                return jsonify({'error': 'AI服务暂时不可用，请稍后再试', 'request_id': request_id}), 503
-                
-        result = response.json()
-        if not result.get('choices') or not result['choices'][0].get('message'):
-            error_details = {
-                'response_data': result,
-                'request_duration': request_duration
-            }
-            print_error('数据格式错误', 'API返回数据格式不符合预期', error_details)
-            return jsonify({'error': '润色服务暂时不可用，请稍后再试', 'request_id': request_id}), 500
-            
-        polished_prompt = result['choices'][0]['message']['content'].strip()
-        print(f"{Fore.GREEN}[{request_id}] 润色成功完成")
-        
-        return jsonify({
-            'polished_prompt': polished_prompt,
-            'request_id': request_id,
-            'duration': request_duration
-        })
-        
-    except Exception as e:
-        error_details = {
-            'error_type': type(e).__name__,
-            'error_message': str(e),
-            'traceback': traceback.format_exc()
         }
-        print_error('未知错误', str(e), error_details)
-        return jsonify({'error': '润色服务暂时不可用，请稍后再试', 'request_id': request_id}), 500
+    },
+)
 
-@app.route('/api/openai_review', methods=['POST'])
-def get_openai_review():
-    request_id = f"req_{int(time.time())}_{os.urandom(4).hex()}"
-    print(f"{Fore.GREEN}[{request_id}] 收到OpenAI评价请求")
-    
+
+def request_id() -> str:
+    if "request_id" not in g:
+        supplied_id = request.headers.get("X-Request-ID", "").strip()
+        g.request_id = (supplied_id or uuid.uuid4().hex[:16])[:64]
+    return g.request_id
+
+
+def detected_image_type(content: bytes) -> str | None:
+    """Return the MIME type from a small, explicit set of file signatures."""
+    if content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if content.startswith(b"RIFF") and content[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def error_response(message: str, status: int, req_id: str):
+    return jsonify({"error": message, "request_id": req_id}), status
+
+
+def parse_upstream_json(response: requests.Response, req_id: str) -> dict[str, Any] | None:
     try:
-        if 'file' not in request.files:
-            print(f"{Fore.RED}[{request_id}] 未收到文件")
-            return jsonify({'error': '请上传图片文件', 'request_id': request_id}), 400
-            
-        file = request.files['file']
-        if not file:
-            print(f"{Fore.RED}[{request_id}] 文件为空")
-            return jsonify({'error': '文件不能为空', 'request_id': request_id}), 400
-            
-        if not OPENAI_API_KEY:
-            print(f"{Fore.RED}[{request_id}] OpenAI API密钥未配置")
-            return jsonify({'error': '服务器配置错误，请联系管理员', 'request_id': request_id}), 500
-            
-        print(f"{Fore.CYAN}[{request_id}] 开始处理文件")
-        
-        # 保存文件到临时目录
-        temp_dir = os.path.join(os.getcwd(), 'temp')
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_file_path = os.path.join(temp_dir, f"{request_id}_{file.filename}")
-        file.save(temp_file_path)
-        
-        try:
-            # 读取文件内容
-            with open(temp_file_path, 'rb') as f:
-                file_content = f.read()
-            
-            # 准备请求头
-            headers = {
-                'Authorization': f'Bearer {OPENAI_API_KEY}',
-                'Content-Type': 'application/json'
-            }
-            
-            # 构建请求体
-            payload = {
-                'model': 'gpt-4o',
-                'messages': [
-                    {
-                        'role': 'system',
-                        'content': '你是一个专业的家居设计评价专家。请根据提供的家居图片，从以下几个方面进行分析：\n1. 整体风格和氛围\n2. 空间布局和功能性\n3. 色彩搭配和材质选择\n4. 家具选择和摆放\n5. 装饰细节\n6. 改进建议\n请用专业但易懂的语言进行评价，并给出具体的改进建议。'
-                    },
-                    {
-                        'role': 'user',
-                        'content': [
-                            {
-                                'type': 'image_url',
-                                'image_url': {
-                                    'url': f"data:image/jpeg;base64,{base64.b64encode(file_content).decode('utf-8')}"
-                                }
-                            },
-                            {
-                                'type': 'text',
-                                'text': '请分析这张家居图片，给出专业的评价和改进建议。'
-                            }
-                        ]
-                    }
-                ],
-                'max_tokens': 1000
-            }
-            
-            print(f"{Fore.CYAN}[{request_id}] 开始发送请求到OpenAI")
-            print(f"{Fore.CYAN}[{request_id}] API URL: {OPENAI_API_BASE_URL}/v1/chat/completions")
-            print(f"{Fore.CYAN}[{request_id}] Headers: {json.dumps({k: '***' if k == 'Authorization' else v for k, v in headers.items()}, ensure_ascii=False, indent=2)}")
-            print(f"{Fore.CYAN}[{request_id}] Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
-            
-            start_time = time.time()
-            
-            try:
-                response = requests.post(
-                    f'{OPENAI_API_BASE_URL}/v1/chat/completions',
-                    headers=headers,
-                    json=payload,
-                    timeout=60
-                )
-            except requests.exceptions.Timeout:
-                print(f"{Fore.RED}[{request_id}] 请求超时")
-                return jsonify({'error': 'OpenAI API请求超时', 'request_id': request_id}), 504
-            except requests.exceptions.RequestException as e:
-                print(f"{Fore.RED}[{request_id}] 请求异常: {str(e)}")
-                return jsonify({'error': f'OpenAI API请求失败: {str(e)}', 'request_id': request_id}), 500
-            
-            end_time = time.time()
-            request_duration = end_time - start_time
-            print(f"{Fore.CYAN}[{request_id}] API请求耗时: {request_duration:.2f}秒")
-            print(f"{Fore.CYAN}[{request_id}] 响应状态码: {response.status_code}")
-            print(f"{Fore.CYAN}[{request_id}] 响应内容: {response.text}")
-            
-            if response.status_code != 200:
-                error_details = {
-                    'status_code': response.status_code,
-                    'response_text': response.text,
-                    'request_duration': request_duration
-                }
-                print(f"{Fore.RED}[{request_id}] OpenAI API错误: {error_details}")
-                return jsonify({'error': f'OpenAI API请求失败: {response.text}', 'request_id': request_id}), 500
-                
-            result = response.json()
-            if not result.get('choices') or not result['choices'][0].get('message'):
-                print(f"{Fore.RED}[{request_id}] 返回数据格式错误")
-                return jsonify({'error': '评价服务暂时不可用，请稍后再试', 'request_id': request_id}), 500
-                
-            review = result['choices'][0]['message']['content'].strip()
-            print(f"{Fore.GREEN}[{request_id}] 评价成功完成")
-            
-            return jsonify({
-                'review': review,
-                'request_id': request_id,
-                'duration': request_duration
-            })
-            
-        finally:
-            # 清理临时文件
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-                
-    except Exception as e:
-        print(f"{Fore.RED}[{request_id}] 未知错误: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': f'评价服务暂时不可用: {str(e)}', 'request_id': request_id}), 500
+        return response.json()
+    except ValueError:
+        logger.warning("[%s] 上游返回非 JSON 响应，状态码=%s", req_id, response.status_code)
+        return None
 
-if __name__ == '__main__':
-    print(f"\n{Fore.GREEN}{'='*50}")
-    print(f"{Fore.GREEN}服务器启动")
-    print(f"{Fore.GREEN}混元API配置: {'已配置' if HUNYUAN_API_KEY else '未配置'}")
-    print(f"{Fore.GREEN}API端点: {HUNYUAN_API_BASE_URL}")
-    print(f"{Fore.GREEN}OpenAI API配置: {'已配置' if OPENAI_API_KEY else '未配置'}")
-    print(f"{Fore.GREEN}API端点: {OPENAI_API_BASE_URL}")
-    print(f"{Fore.GREEN}{'='*50}\n")
-    
-    # 开发环境
-    if os.environ.get('FLASK_ENV') == 'development':
-        app.run(debug=True, port=8000)
-    # 生产环境
-    else:
-        serve(app, host='0.0.0.0', port=8000) 
+
+def upstream_error(response: requests.Response, req_id: str):
+    logger.warning("[%s] 上游请求失败，状态码=%s", req_id, response.status_code)
+    if response.status_code == 429:
+        return error_response("请求过于频繁，请稍后再试", 429, req_id)
+    if response.status_code in {401, 403}:
+        return error_response("AI 服务认证失败，请联系管理员", 502, req_id)
+    return error_response("AI 服务暂时不可用，请稍后再试", 502, req_id)
+
+
+@app.after_request
+def apply_response_headers(response):
+    response.headers["X-Request-ID"] = request_id()
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@app.errorhandler(413)
+def upload_too_large(_error):
+    return error_response("图片大小超过限制", 413, request_id())
+
+
+@app.get("/health")
+def health():
+    return jsonify(
+        {
+            "status": "healthy",
+            "providers": {
+                "hunyuan_configured": bool(HUNYUAN_API_KEY),
+                "openai_configured": bool(OPENAI_API_KEY),
+            },
+        }
+    )
+
+
+@app.post("/api/polish")
+def polish_prompt():
+    req_id = request_id()
+    data = request.get_json(silent=True)
+    prompt = data.get("prompt") if isinstance(data, dict) else None
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        return error_response("提示词不能为空", 400, req_id)
+    prompt = prompt.strip()
+    if len(prompt) > 1000:
+        return error_response("提示词长度不能超过 1000 个字符", 400, req_id)
+    if not HUNYUAN_API_KEY:
+        return error_response("润色服务尚未配置", 503, req_id)
+
+    payload = {
+        "model": HUNYUAN_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "你是专业的家居设计提示词优化助手。保留用户原意，补充空间、材质、"
+                    "光线与风格细节，输出一段清晰且可直接用于图像生成的中文提示词。"
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 500,
+        "enable_enhancement": True,
+    }
+
+    try:
+        response = requests.post(
+            endpoint(HUNYUAN_API_BASE_URL, "chat/completions"),
+            headers={
+                "Authorization": f"Bearer {HUNYUAN_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=(5, UPSTREAM_TIMEOUT_SECONDS),
+        )
+    except requests.Timeout:
+        return error_response("AI 服务请求超时，请稍后再试", 504, req_id)
+    except requests.RequestException:
+        logger.exception("[%s] 无法连接混元服务", req_id)
+        return error_response("AI 服务暂时不可用，请稍后再试", 502, req_id)
+
+    if not response.ok:
+        return upstream_error(response, req_id)
+
+    result = parse_upstream_json(response, req_id)
+    try:
+        polished_prompt = result["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return error_response("AI 服务返回格式异常", 502, req_id)
+
+    return jsonify({"polished_prompt": polished_prompt, "request_id": req_id})
+
+
+@app.post("/api/openai_review")
+def openai_review():
+    req_id = request_id()
+    uploaded_file = request.files.get("file")
+
+    if uploaded_file is None or not uploaded_file.filename:
+        return error_response("请上传图片文件", 400, req_id)
+    if uploaded_file.mimetype not in ALLOWED_IMAGE_TYPES:
+        return error_response("仅支持 JPEG、PNG 或 WebP 图片", 415, req_id)
+    if not OPENAI_API_KEY:
+        return error_response("图片评价服务尚未配置", 503, req_id)
+
+    file_content = uploaded_file.stream.read(MAX_UPLOAD_BYTES + 1)
+    if not file_content:
+        return error_response("图片文件不能为空", 400, req_id)
+    if len(file_content) > MAX_UPLOAD_BYTES:
+        return error_response("图片大小超过限制", 413, req_id)
+    actual_mimetype = detected_image_type(file_content)
+    if actual_mimetype is None or actual_mimetype != uploaded_file.mimetype:
+        return error_response("图片内容与文件类型不符", 415, req_id)
+
+    data_url = (
+        f"data:{actual_mimetype};base64,"
+        f"{base64.b64encode(file_content).decode('ascii')}"
+    )
+    payload = {
+        "model": OPENAI_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "你是专业的家居设计评价专家。请从整体风格、空间布局、色彩材质、"
+                    "家具摆放和装饰细节进行分析，并给出具体、可执行的改进建议。"
+                ),
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "请分析这张家居图片。"},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            },
+        ],
+        "max_completion_tokens": 1000,
+    }
+
+    try:
+        response = requests.post(
+            endpoint(OPENAI_API_BASE_URL, "chat/completions"),
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=(5, UPSTREAM_TIMEOUT_SECONDS),
+        )
+    except requests.Timeout:
+        return error_response("图片评价服务请求超时", 504, req_id)
+    except requests.RequestException:
+        logger.exception("[%s] 无法连接图片评价服务", req_id)
+        return error_response("图片评价服务暂时不可用", 502, req_id)
+
+    if not response.ok:
+        return upstream_error(response, req_id)
+
+    result = parse_upstream_json(response, req_id)
+    try:
+        review = result["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return error_response("图片评价服务返回格式异常", 502, req_id)
+
+    return jsonify({"review": review, "request_id": req_id})
+
+
+if __name__ == "__main__":
+    host = os.getenv("AI_HOST", "127.0.0.1")
+    port = env_int("AI_PORT", 8000)
+    logger.info(
+        "AI gateway 启动于 %s:%s（混元=%s，OpenAI=%s）",
+        host,
+        port,
+        "已配置" if HUNYUAN_API_KEY else "未配置",
+        "已配置" if OPENAI_API_KEY else "未配置",
+    )
+    serve(app, host=host, port=port)

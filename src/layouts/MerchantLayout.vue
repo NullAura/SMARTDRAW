@@ -5,7 +5,7 @@
       <div class="logo">
         <h2>{{ isCollapsed ? 'SD' : 'SMARTDRAW' }}</h2>
       </div>
-      
+
       <el-menu
         :default-active="activeMenu"
         class="menu"
@@ -20,7 +20,7 @@
           <el-icon><DataLine /></el-icon>
           <span>数据概览</span>
         </el-menu-item>
-        
+
         <el-sub-menu index="data-analysis">
           <template #title>
             <el-icon><PieChart /></el-icon>
@@ -29,26 +29,26 @@
           <el-menu-item index="/merchant/data-analysis">抖音热点分析</el-menu-item>
           <el-menu-item index="/merchant/keyword-analysis">关键词分析</el-menu-item>
         </el-sub-menu>
-        
+
         <el-menu-item index="/merchant/ai-tools">
           <el-icon><Connection /></el-icon>
           <span>AI创作中心</span>
         </el-menu-item>
-        
+
         <el-menu-item index="/merchant/products">
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
-        
+
         <el-menu-item index="/merchant/community">
           <el-icon><ChatLineRound /></el-icon>
           <span>社区运营</span>
         </el-menu-item>
       </el-menu>
-      
+
       <div class="collapse-btn" @click="toggleCollapse">
         <el-icon>
-          <component :is="isCollapsed ? 'Expand' : 'Fold'" />
+          <component :is="isCollapsed ? Expand : Fold" />
         </el-icon>
       </div>
     </div>
@@ -66,7 +66,7 @@
             <el-breadcrumb-item>{{ currentPageTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        
+
         <div class="right">
           <el-dropdown trigger="click">
             <div class="user-info">
@@ -90,8 +90,8 @@
     </div>
 
     <!-- 移动端遮罩层 -->
-    <div 
-      v-if="isMobile && !isCollapsed" 
+    <div
+      v-if="isMobile && !isCollapsed"
       class="mobile-mask"
       @click="toggleCollapse"
     ></div>
@@ -145,7 +145,7 @@ onMounted(() => {
   checkScreenSize()
   // 添加窗口大小变化监听
   window.addEventListener('resize', checkScreenSize)
-  
+
   // 检查登录状态并获取用户信息
   console.log('商家布局初始化，检查登录状态')
   if (userStore.checkLoginStatus()) {
@@ -205,11 +205,11 @@ const handleLogout = async () => {
         type: 'warning'
       }
     )
-    
+
     console.log('执行登出操作')
     // 调用store中的登出方法
     await userStore.logout()
-    
+
     console.log('登出成功，跳转到登录页')
     // 跳转到登录页
     router.push('/login')
@@ -218,7 +218,7 @@ const handleLogout = async () => {
       console.log('用户取消登出')
       return
     }
-    
+
     console.error('登出失败:', error)
     ElMessage.error('登出失败，将强制清除登录状态')
     // 即使API调用失败，也要清除本地状态并跳转
@@ -339,7 +339,7 @@ $content-z-index: 20; // 提高内容区域的z-index
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-      
+
       // 普通样式（位于内容顶部）
       position: relative;
       z-index: $topbar-z-index;
@@ -425,4 +425,4 @@ $content-z-index: 20; // 提高内容区域的z-index
 :deep(.function-menu) {
   z-index: 998 !important; // 确保功能菜单在顶部导航栏之下
 }
-</style> 
+</style>

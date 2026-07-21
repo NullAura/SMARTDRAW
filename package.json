@@ -1,6 +1,6 @@
 {
   "name": "smartdraw",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,44 +9,42 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "npm run lint && npm run build && npm --prefix server test",
+    "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:image-service": "node test_generate.js",
+    "security:secrets": "gitleaks dir . --redact=100 --no-banner"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.1",
-    "@fortawesome/fontawesome-free": "^6.5.1",
-    "@vitejs/plugin-legacy": "^5.3.0",
-    "@vue/cli": "^5.0.8",
-    "@vueuse/core": "^10.7.2",
-    "axios": "^1.6.7",
-    "element-plus": "^2.5.6",
-    "pinia": "^2.1.7",
-    "sass": "^1.71.1",
-    "vant": "^4.9.18",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "@element-plus/icons-vue": "^2.3.2",
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "@vueuse/core": "^14.3.0",
+    "axios": "^1.18.1",
+    "echarts": "^6.1.0",
+    "element-plus": "^2.14.3",
+    "pinia": "^2.3.1",
+    "vant": "^4.10.0",
+    "vue": "^3.5.40",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "@vitejs/plugin-vue": "^5.0.4",
-    "eslint": "^8.56.0",
-    "eslint-plugin-vue": "^9.22.0",
-    "form-data": "^4.0.2",
-    "node-fetch": "^2.7.0",
-    "prettier": "^3.2.5",
-    "sass-loader": "^14.1.0",
-    "vite": "^5.1.4",
-    "vite-plugin-vue-devtools": "^7.0.16"
+    "@vitejs/plugin-vue": "^5.2.4",
+    "eslint": "^9.39.2",
+    "eslint-plugin-vue": "^10.10.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.6",
+    "sass": "^1.101.3",
+    "unplugin-auto-import": "^21.0.0",
+    "unplugin-vue-components": "^32.1.0",
+    "vite": "^6.4.3"
   },
-  "description": "一个基于 Vue 3 + Node.js + MongoDB 的智能绘图平台。",
-  "main": "test_generate.js",
+  "description": "基于 Vue 3、Node.js、MongoDB 与 Python AI 网关的智能家居绘图平台。",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NullAura/SMARTDRAW.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/NullAura/SMARTDRAW/issues"
   },

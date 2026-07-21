@@ -86,7 +86,7 @@
           </div>
         </div>
         <div class="canvas-content">
-          <div v-for="(item, index) in canvasItems" 
+          <div v-for="(item, index) in canvasItems"
                :key="index"
                class="canvas-item"
                :class="{ 'selected': selectedItem === index }"
@@ -94,7 +94,7 @@
                @dragstart="dragStart($event, 'move')"
                draggable="true">
             <div class="item-content">
-              <component :is="item.type" :data="item.data"></component>
+              <component :is="componentFor(item.type)" :data="item.data"></component>
             </div>
             <div class="item-actions">
               <button class="btn" @click="editItem(index)">
@@ -170,6 +170,7 @@
 import TextComponent from '@/components/ai/TextComponent.vue'
 import ImageComponent from '@/components/ai/ImageComponent.vue'
 import PriceComponent from '@/components/ai/PriceComponent.vue'
+import { post } from '@/utils/request'
 
 export default {
   name: 'AITools',
@@ -190,6 +191,13 @@ export default {
     }
   },
   methods: {
+    componentFor(type) {
+      return {
+        text: TextComponent,
+        image: ImageComponent,
+        price: PriceComponent
+      }[type]
+    },
     dragStart(event, type) {
       this.dragItem = type
       event.dataTransfer.setData('text/plain', type)
@@ -268,20 +276,25 @@ export default {
       }
       this.saveHistory()
     },
-    saveWork() {
+    async saveWork() {
       const work = {
         template: this.currentTemplate,
         items: this.canvasItems
       }
-      localStorage.setItem('ai_work', JSON.stringify(work))
-      this.showToast({ message: '保存成功', type: 'success' })
+      try {
+        await post('/api/merchant/ai/save', work)
+        localStorage.setItem('ai_work', JSON.stringify(work))
+        this.$toast.success('保存成功')
+      } catch (error) {
+        this.$toast.error(error.response?.data?.message || '保存失败')
+      }
     },
     exportWork() {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       canvas.width = 800
       canvas.height = 1200
-      
+
       // 设置背景色
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -313,29 +326,18 @@ export default {
     },
     async generateContent(type) {
       try {
-        const response = await fetch('http://121.41.225.168:5173/api/openai_review', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            type,
-            template: this.currentTemplate,
-            currentItems: this.canvasItems
-          })
+        const result = await post('/api/merchant/ai/generate', {
+          type,
+          template: this.currentTemplate,
+          currentItems: this.canvasItems
         })
+        const generated = result.data
 
-        if (!response.ok) {
-          throw new Error('生成失败')
-        }
-
-        const result = await response.json()
-        
         if (type === 'description') {
           this.canvasItems.push({
             type: 'text',
             data: {
-              content: result.content,
+              content: generated.content,
               fontSize: 14,
               color: '#333'
             },
@@ -348,7 +350,7 @@ export default {
           this.canvasItems.push({
             type: 'image',
             data: {
-              url: result.imageUrl,
+              url: generated.imageUrl,
               fit: 'contain'
             },
             x: 100,
@@ -356,13 +358,22 @@ export default {
             width: 600,
             height: 400
           })
+        } else if (type === 'tag') {
+          this.canvasItems.push({
+            type: 'text',
+            data: { content: generated.content, fontSize: 14, color: '#333' },
+            x: 100,
+            y: 100,
+            width: 600,
+            height: 100
+          })
         }
 
         this.saveHistory()
         this.showAIDialog = false
-        this.showToast({ message: '生成成功', type: 'success' })
+        this.$toast.success('生成成功')
       } catch (error) {
-        this.showToast({ message: error.message || '生成失败', type: 'fail' })
+        this.$toast.error(error.response?.data?.message || error.message || '生成失败')
       }
     },
     saveHistory() {
@@ -712,4 +723,4 @@ export default {
     height: calc(100vh - 400px);
   }
 }
-</style> 
+</style>

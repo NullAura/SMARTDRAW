@@ -17,13 +17,13 @@ export const generateRandomData = (length, min, max) => {
 export const generateDateRange = (days) => {
   const result = []
   const endDate = new Date()
-  
+
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date()
     date.setDate(endDate.getDate() - i)
     result.push(`${date.getMonth() + 1}/${date.getDate()}`)
   }
-  
+
   return result
 }
 
@@ -47,7 +47,7 @@ export const formatNumber = (num) => {
  * @param {string} analysisType - 分析类型
  * @returns {Promise<Object>} - 分析结果数据
  */
-export const fetchAnalysisData = async (keyword, analysisType) => {
+export const fetchAnalysisData = async (keyword, _analysisType) => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const result = {
@@ -89,8 +89,8 @@ export const fetchAnalysisData = async (keyword, analysisType) => {
           trendAnalysis: `根据数据分析，"${keyword}"相关的家居产品市场正处于快速增长期，与去年同期相比增长了35%。消费者对高品质、设计感强的产品需求明显，价格因素影响较小。建议在产品设计和营销中强调环保材质、收纳功能和极简风格等要素，以满足目标人群需求。`
         }
       }
-      
+
       resolve(result)
     }, 1500)
   })
-} 
+}

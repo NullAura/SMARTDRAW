@@ -2,7 +2,7 @@
   <div class="register-container">
     <div class="register-box">
       <div class="logo">
-        <img src="@/assets/background.png" alt="Logo">
+        <img src="@/assets/background.webp" alt="SMARTDRAW 品牌插图">
         <h1>商家入驻</h1>
       </div>
 
@@ -142,7 +142,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
-import { API_BASE_URL } from '@/config'
+import { API_BASE_URL, buildUrl } from '@/config'
 
 export default {
   name: 'MerchantRegister',
@@ -184,15 +184,15 @@ export default {
         address: '',
         businessLicense: ''
       }
-      
+
       let isValid = true
-      
+
       // 店铺名称验证
       if (!this.formData.storeName) {
         this.errors.storeName = '请输入店铺名称'
         isValid = false
       }
-      
+
       // 用户名验证
       if (!this.formData.username) {
         this.errors.username = '请输入管理员账号'
@@ -201,7 +201,7 @@ export default {
         this.errors.username = '账号长度不能少于3位'
         isValid = false
       }
-      
+
       // 邮箱验证
       if (!this.formData.email) {
         this.errors.email = '请输入邮箱'
@@ -210,7 +210,7 @@ export default {
         this.errors.email = '请输入有效的邮箱地址'
         isValid = false
       }
-      
+
       // 电话验证
       if (!this.formData.phone) {
         this.errors.phone = '请输入联系电话'
@@ -219,16 +219,16 @@ export default {
         this.errors.phone = '请输入有效的手机号码'
         isValid = false
       }
-      
+
       // 密码验证
       if (!this.formData.password) {
         this.errors.password = '请输入密码'
         isValid = false
-      } else if (this.formData.password.length < 6) {
-        this.errors.password = '密码长度不能少于6位'
+      } else if (this.formData.password.length < 8) {
+        this.errors.password = '密码长度不能少于8位'
         isValid = false
       }
-      
+
       // 确认密码验证
       if (!this.formData.confirmPassword) {
         this.errors.confirmPassword = '请确认密码'
@@ -237,47 +237,52 @@ export default {
         this.errors.confirmPassword = '两次输入的密码不一致'
         isValid = false
       }
-      
+
       // 地址验证
       if (!this.formData.address) {
         this.errors.address = '请输入店铺地址'
         isValid = false
       }
-      
+
       // 营业执照验证
       if (!this.formData.businessLicense) {
         this.errors.businessLicense = '请输入营业执照号'
         isValid = false
       }
-      
+
       // 协议验证
       if (!this.formData.agree) {
         ElMessage.warning('请阅读并同意商家入驻协议')
         isValid = false
       }
-      
+
       return isValid
     },
-    
+
     async handleSubmit() {
       if (!this.validateForm()) return
-      
+
       this.loading = true
       try {
-        const response = await fetch(`${API_BASE_URL}/api/merchant/register`, {
+        const response = await fetch(buildUrl(API_BASE_URL, '/api/merchant/register'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            ...this.formData,
-            role: 'merchant'
+            storeName: this.formData.storeName,
+            username: this.formData.username,
+            email: this.formData.email,
+            phone: this.formData.phone,
+            password: this.formData.password,
+            address: this.formData.address,
+            businessLicense: this.formData.businessLicense
           })
         })
 
         const data = await response.json()
 
-        if (data.success) {
+        if (response.ok && data.success) {
           ElMessage.success('商家入驻申请已提交，请等待审核')
           this.$router.push('/login')
         } else {
@@ -290,7 +295,7 @@ export default {
         this.loading = false
       }
     },
-    
+
     showAgreement() {
       // 显示商家入驻协议
       ElMessage.info('商家入驻协议内容')
@@ -439,4 +444,4 @@ export default {
     padding: 30px 20px;
   }
 }
-</style> 
+</style>

@@ -1,3 +1,9 @@
-// API 配置
-const hostname = window.location.hostname;
-export const API_BASE_URL = `http://${hostname}:3000`; 
+const normalizeBaseUrl = (value = '') => value.trim().replace(/\/$/, '')
+
+export const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL)
+export const AI_API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_AI_API_BASE_URL)
+
+export function buildUrl(baseUrl, path) {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${normalizeBaseUrl(baseUrl)}${normalizedPath}`
+}

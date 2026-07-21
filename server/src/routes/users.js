@@ -1,105 +1,108 @@
 const express = require('express');
-const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
-const { auth, isDesigner } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
+const { EMAIL_PATTERN, USERNAME_PATTERN, normalizeString } = require('../utils/validation');
 
-// 获取用户信息
-router.get('/:id', async (req, res) => {
+const router = express.Router();
+const PUBLIC_FIELDS = 'username role description portfolio skills followers following createdAt';
+
+router.param('id', (req, res, next, id) => {
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return res.status(400).json({ success: false, message: '用户 ID 格式无效' });
+  }
+  return next();
+});
+
+router.get('/:id', async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
-    }
-    res.json(user);
+    const user = await User.findById(req.params.id).select(PUBLIC_FIELDS);
+    if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
+    return res.json({ success: true, data: user });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 更新用户信息
-router.patch('/:id', auth, async (req, res) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ['username', 'email', 'description', 'portfolio', 'skills'];
-  const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+router.patch('/:id', auth, async (req, res, next) => {
+  if (req.params.id !== req.user._id.toString()) {
+    return res.status(403).json({ success: false, message: '没有权限更新此用户' });
+  }
 
-  if (!isValidOperation) {
-    return res.status(400).json({ message: '无效的更新字段' });
+  const allowedUpdates = new Set(['username', 'email', 'description', 'portfolio', 'skills']);
+  const updates = Object.keys(req.body || {});
+  if (!updates.length || !updates.every(update => allowedUpdates.has(update))) {
+    return res.status(400).json({ success: false, message: '包含无效的更新字段' });
   }
 
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
+    if ('username' in req.body) {
+      const username = normalizeString(req.body.username);
+      if (!USERNAME_PATTERN.test(username)) {
+        return res.status(400).json({ success: false, message: '用户名格式无效' });
+      }
+      req.user.username = username;
     }
-
-    // 检查权限
-    if (user._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: '没有权限更新此用户信息' });
+    if ('email' in req.body) {
+      const email = normalizeString(req.body.email).toLowerCase();
+      if (!EMAIL_PATTERN.test(email) || email.length > 254) {
+        return res.status(400).json({ success: false, message: '邮箱格式无效' });
+      }
+      req.user.email = email;
     }
-
-    updates.forEach(update => user[update] = req.body[update]);
-    await user.save();
-
-    res.json(user);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// 关注用户
-router.post('/:id/follow', auth, async (req, res) => {
-  try {
-    const userToFollow = await User.findById(req.params.id);
-    if (!userToFollow) {
-      return res.status(404).json({ message: '用户不存在' });
-    }
-
-    if (userToFollow._id.toString() === req.user._id.toString()) {
-      return res.status(400).json({ message: '不能关注自己' });
-    }
-
-    const isFollowing = req.user.following.includes(userToFollow._id);
-    if (isFollowing) {
-      req.user.following = req.user.following.filter(id => id.toString() !== userToFollow._id.toString());
-      userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== req.user._id.toString());
-    } else {
-      req.user.following.push(userToFollow._id);
-      userToFollow.followers.push(req.user._id);
-    }
+    if ('description' in req.body) req.user.description = normalizeString(req.body.description);
+    if ('portfolio' in req.body) req.user.portfolio = req.body.portfolio;
+    if ('skills' in req.body) req.user.skills = req.body.skills;
 
     await req.user.save();
-    await userToFollow.save();
-
-    res.json({ message: isFollowing ? '取消关注成功' : '关注成功' });
+    return res.json({ success: true, data: req.user });
   } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// 获取关注列表
-router.get('/:id/following', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).populate('following', 'username email userType');
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: '用户名或邮箱已被使用' });
     }
-    res.json(user.following);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-// 获取粉丝列表
-router.get('/:id/followers', async (req, res) => {
+router.post('/:id/follow', auth, async (req, res, next) => {
+  if (req.params.id === req.user._id.toString()) {
+    return res.status(400).json({ success: false, message: '不能关注自己' });
+  }
+
   try {
-    const user = await User.findById(req.params.id).populate('followers', 'username email userType');
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
-    }
-    res.json(user.followers);
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, message: '用户不存在' });
+
+    const isFollowing = req.user.following.some(id => id.equals(target._id));
+    const operation = isFollowing ? '$pull' : '$addToSet';
+    await Promise.all([
+      User.updateOne({ _id: req.user._id }, { [operation]: { following: target._id } }),
+      User.updateOne({ _id: target._id }, { [operation]: { followers: req.user._id } })
+    ]);
+    return res.json({ success: true, message: isFollowing ? '已取消关注' : '关注成功' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return next(error);
   }
 });
 
-module.exports = router; 
+router.get('/:id/following', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).populate('following', 'username role');
+    if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
+    return res.json({ success: true, data: user.following });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/:id/followers', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).populate('followers', 'username role');
+    if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
+    return res.json({ success: true, data: user.followers });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+module.exports = router;

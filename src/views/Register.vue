@@ -74,7 +74,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
-import { API_BASE_URL } from '@/config'
+import { API_BASE_URL, buildUrl } from '@/config'
 
 export default {
   name: 'Register',
@@ -103,9 +103,9 @@ export default {
         password: '',
         confirmPassword: ''
       }
-      
+
       let isValid = true
-      
+
       // 用户名验证
       if (!this.formData.username) {
         this.errors.username = '请输入用户名'
@@ -114,7 +114,7 @@ export default {
         this.errors.username = '用户名长度不能少于3位'
         isValid = false
       }
-      
+
       // 邮箱验证
       if (!this.formData.email) {
         this.errors.email = '请输入邮箱'
@@ -123,16 +123,16 @@ export default {
         this.errors.email = '请输入有效的邮箱地址'
         isValid = false
       }
-      
+
       // 密码验证
       if (!this.formData.password) {
         this.errors.password = '请输入密码'
         isValid = false
-      } else if (this.formData.password.length < 6) {
-        this.errors.password = '密码长度不能少于6位'
+      } else if (this.formData.password.length < 8) {
+        this.errors.password = '密码长度不能少于8位'
         isValid = false
       }
-      
+
       // 确认密码验证
       if (!this.formData.confirmPassword) {
         this.errors.confirmPassword = '请确认密码'
@@ -141,30 +141,16 @@ export default {
         this.errors.confirmPassword = '两次输入的密码不一致'
         isValid = false
       }
-      
+
       return isValid
     },
-    
+
     async handleSubmit() {
       if (!this.validateForm()) return
-      
+
       this.loading = true
       try {
-        console.log('开始注册请求...')
-        console.log('环境信息:', {
-          hostname: window.location.hostname,
-          protocol: window.location.protocol,
-          port: window.location.port,
-          fullUrl: window.location.href,
-          API_BASE_URL
-        })
-        console.log('请求参数:', {
-          username: this.formData.username,
-          email: this.formData.email,
-          password: '******' // 不输出实际密码
-        })
-        
-        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        const response = await fetch(buildUrl(API_BASE_URL, '/api/auth/register'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -177,60 +163,16 @@ export default {
           })
         })
 
-        console.log('收到响应:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          ok: response.ok,
-          type: response.type,
-          url: response.url
-        })
-
         const data = await response.json()
-        console.log('响应数据:', data)
 
-        if (data.success) {
-          console.log('注册成功:', {
-            username: data.data?.user?.username,
-            email: data.data?.user?.email,
-            id: data.data?.user?.id
-          })
+        if (response.ok && data.success) {
           ElMessage.success(data.message)
           this.$router.push('/login')
         } else {
-          console.error('注册失败:', {
-            message: data.message,
-            success: data.success,
-            data: data.data
-          })
           ElMessage.error(data.message || '注册失败')
         }
       } catch (error) {
-        console.error('注册错误详情:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        })
-        
         if (error.message.includes('Failed to fetch')) {
-          console.error('网络请求失败，可能的原因：')
-          console.error('1. 服务器未启动')
-          console.error('2. 网络连接问题')
-          console.error('3. CORS 配置问题')
-          console.error('4. 防火墙阻止')
-          console.error('5. 服务器地址配置错误')
-          console.error('6. DNS 解析问题')
-          console.error('当前网络环境:', {
-            online: navigator.onLine,
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            connection: navigator.connection ? {
-              type: navigator.connection.effectiveType,
-              downlink: navigator.connection.downlink,
-              rtt: navigator.connection.rtt
-            } : 'Not available'
-          })
           ElMessage.error('无法连接到服务器，请检查网络连接')
         } else {
           ElMessage.error('注册失败：' + error.message)
@@ -246,7 +188,7 @@ export default {
 <style scoped>
 .register-container {
   min-height: 100vh;
-  background: url("../assets/Logbackground.png");
+  background: url("../assets/Logbackground.webp");
   background-size: cover;
   background-position: center;
   display: flex;
@@ -376,4 +318,4 @@ input {
     font-size: 0.9rem;
   }
 }
-</style> 
+</style>

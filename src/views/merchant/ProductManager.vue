@@ -27,11 +27,11 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-      
+
       <el-select v-model="categoryFilter" placeholder="商品分类" clearable @change="filterProducts">
         <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
       </el-select>
-      
+
       <el-select v-model="statusFilter" placeholder="商品状态" clearable @change="filterProducts">
         <el-option label="上架中" value="active" />
         <el-option label="已下架" value="inactive" />
@@ -43,7 +43,7 @@
     <el-table :data="filteredProducts" style="width: 100%" v-loading="loading">
       <el-table-column label="商品图片" width="100">
         <template #default="scope">
-          <el-image 
+          <el-image
             style="width: 80px; height: 80px"
             :src="scope.row.imageUrl || 'https://placehold.co/80x80/f0f0f0/cccccc?text=IMG'"
             fit="cover"
@@ -68,8 +68,8 @@
       <el-table-column label="操作" width="220">
         <template #default="scope">
           <el-button size="small" @click="editProduct(scope.row)">编辑</el-button>
-          <el-button 
-            size="small" 
+          <el-button
+            size="small"
             :type="scope.row.status === 'active' ? 'danger' : 'success'"
             @click="toggleProductStatus(scope.row)"
           >
@@ -130,7 +130,7 @@
                 </div>
               </template>
             </el-upload>
-            
+
             <div class="template-download">
               <a href="#" @click.prevent="downloadTemplate">下载模板</a>
             </div>
@@ -176,8 +176,8 @@
     </el-dialog>
 
     <!-- 添加/编辑商品对话框 -->
-    <el-dialog 
-      v-model="productDialogVisible" 
+    <el-dialog
+      v-model="productDialogVisible"
       :title="editingProduct.id ? '编辑商品' : '添加商品'"
       width="580px"
     >
@@ -187,26 +187,26 @@
         </el-form-item>
         <el-form-item label="价格">
           <div class="price-input">
-            <el-input-number 
-              v-model="editingProduct.price" 
-              :min="0" 
-              :precision="0" 
+            <el-input-number
+              v-model="editingProduct.price"
+              :min="0"
+              :precision="0"
               style="width: 150px;"
             ></el-input-number>
             <span class="price-separator">.</span>
-            <el-input-number 
-              v-model="editingProduct.priceDecimal" 
-              :min="0" 
-              :max="99" 
-              :precision="0" 
+            <el-input-number
+              v-model="editingProduct.priceDecimal"
+              :min="0"
+              :max="99"
+              :precision="0"
               style="width: 100px;"
             ></el-input-number>
           </div>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input 
-            v-model="editingProduct.description" 
-            type="textarea" 
+          <el-input
+            v-model="editingProduct.description"
+            type="textarea"
             placeholder="输入商品描述"
           ></el-input>
         </el-form-item>
@@ -264,11 +264,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, 
-  Search, 
-  UploadFilled, 
+import { ElMessage } from 'element-plus'
+import {
+  Plus,
+  Search,
+  UploadFilled,
   Upload
 } from '@element-plus/icons-vue'
 
@@ -389,26 +389,26 @@ const confirmCallback = ref(null)
 // 过滤的商品
 const filteredProducts = computed(() => {
   let result = [...products.value]
-  
+
   // 搜索过滤
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(p => 
-      p.name.toLowerCase().includes(query) || 
+    result = result.filter(p =>
+      p.name.toLowerCase().includes(query) ||
       p.description.toLowerCase().includes(query)
     )
   }
-  
+
   // 分类过滤
   if (categoryFilter.value) {
     result = result.filter(p => p.category === categoryFilter.value)
   }
-  
+
   // 状态过滤
   if (statusFilter.value) {
     result = result.filter(p => p.status === statusFilter.value)
   }
-  
+
   return result
 })
 
@@ -475,12 +475,12 @@ const importProducts = () => {
       ElMessage.warning('请输入商品名称')
       return
     }
-    
+
     // 计算价格整数和小数部分
     const fullPrice = manualProduct.value.price
     const priceInt = Math.floor(fullPrice)
     const priceDecimal = Math.round((fullPrice - priceInt) * 100)
-    
+
     const newProduct = {
       id: Date.now().toString(),
       name: manualProduct.value.name,
@@ -493,7 +493,7 @@ const importProducts = () => {
       stock: manualProduct.value.stock,
       categoryName: categories.find(c => c.id === manualProduct.value.category)?.name || ''
     }
-    
+
     products.value.push(newProduct)
     ElMessage.success('商品添加成功')
     importDialogVisible.value = false
@@ -504,7 +504,7 @@ const importProducts = () => {
       ElMessage.warning('请选择要导入的文件')
       return
     }
-    
+
     ElMessage.success('文件导入功能开发中，暂时只支持手动导入')
     importDialogVisible.value = false
   }
@@ -527,7 +527,7 @@ const showAddDialog = () => {
 }
 
 const editProduct = (product) => {
-  editingProduct.value = { 
+  editingProduct.value = {
     ...product,
     price: Number(product.price),
     priceDecimal: Number(product.priceDecimal)
@@ -550,7 +550,7 @@ const saveProduct = () => {
     ElMessage.warning('请输入商品名称')
     return
   }
-  
+
   if (editingProduct.value.id) {
     // 更新已有商品
     const index = products.value.findIndex(p => p.id === editingProduct.value.id)
@@ -572,7 +572,7 @@ const saveProduct = () => {
     products.value.push(newProduct)
     ElMessage.success('商品添加成功')
   }
-  
+
   productDialogVisible.value = false
 }
 
@@ -723,4 +723,4 @@ onMounted(() => {
 .manual-input-area {
   margin-top: 15px;
 }
-</style> 
+</style>

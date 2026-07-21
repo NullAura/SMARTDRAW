@@ -3,10 +3,32 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import {
+  ArrowDown,
+  ChatDotRound,
+  ChatLineRound,
+  Connection,
+  Cpu,
+  DataAnalysis,
+  DataLine,
+  Expand,
+  Fold,
+  Goods,
+  Lightning,
+  Menu,
+  PieChart,
+  Plus,
+  PriceTag,
+  Refresh,
+  Search,
+  Share,
+  Star,
+  StarFilled,
+  Upload,
+  UploadFilled,
+  View
+} from '@element-plus/icons-vue'
 
 // 导入Vant组件样式
 import 'vant/lib/index.css'
@@ -35,8 +57,33 @@ const pinia = createPinia()
 app.component('LoadingSpinner', LoadingSpinner)
 app.component('Skeleton', Skeleton)
 
-// 注册所有图标
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+const elementIcons = {
+  ArrowDown,
+  ChatDotRound,
+  ChatLineRound,
+  Connection,
+  Cpu,
+  DataAnalysis,
+  DataLine,
+  Expand,
+  Fold,
+  Goods,
+  Lightning,
+  Menu,
+  PieChart,
+  Plus,
+  PriceTag,
+  Refresh,
+  Search,
+  Share,
+  Star,
+  StarFilled,
+  Upload,
+  UploadFilled,
+  View
+}
+
+for (const [key, component] of Object.entries(elementIcons)) {
   app.component(key, component)
 }
 
@@ -48,6 +95,4 @@ app.config.globalProperties.$createIcon = createIcon
 // 先使用 pinia，再使用其他插件
 app.use(pinia)
 app.use(router)
-app.use(ElementPlus)
-
 app.mount('#app')

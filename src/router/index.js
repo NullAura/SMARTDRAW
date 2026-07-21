@@ -1,25 +1,26 @@
 // src/router/index.js
 import { createRouter, createWebHashHistory } from 'vue-router'
-import MainLayout from '@/layouts/MainLayout.vue'
-import MerchantLayout from '@/layouts/MerchantLayout.vue'
-import Home from '@/views/Home.vue'
-import Login from '@/views/Login.vue'
-import Register from '@/views/Register.vue'
-import MerchantRegister from '@/views/merchant/Register.vue'
-import MerchantDashboard from '@/views/merchant/Dashboard.vue'
-import MerchantHome from '@/views/merchant/Home.vue'
-import AITools from '@/views/merchant/AITools.vue'
-import ProductManager from '@/views/merchant/ProductManager.vue'
-import DataAnalysis from '@/views/merchant/DataAnalysis.vue'
-import KeywordAnalysis from '@/views/merchant/KeywordAnalysis.vue'
-import User from '@/views/User.vue'
-import Store from '@/views/Store.vue'
-import Community from '@/views/Community.vue'
-import ProductList from '@/views/ProductList.vue'
-import ProductDetail from '@/views/ProductDetail.vue'
-import Cart from '@/views/Cart.vue'
-import SearchResults from '@/views/SearchResults.vue'
 import { useUserStore } from '@/stores/user'
+
+const MainLayout = () => import('@/layouts/MainLayout.vue')
+const MerchantLayout = () => import('@/layouts/MerchantLayout.vue')
+const Home = () => import('@/views/Home.vue')
+const Login = () => import('@/views/Login.vue')
+const Register = () => import('@/views/Register.vue')
+const MerchantRegister = () => import('@/views/merchant/Register.vue')
+const MerchantDashboard = () => import('@/views/merchant/Dashboard.vue')
+const MerchantHome = () => import('@/views/merchant/Home.vue')
+const AITools = () => import('@/views/merchant/AITools.vue')
+const ProductManager = () => import('@/views/merchant/ProductManager.vue')
+const DataAnalysis = () => import('@/views/merchant/DataAnalysis.vue')
+const KeywordAnalysis = () => import('@/views/merchant/KeywordAnalysis.vue')
+const User = () => import('@/views/User.vue')
+const Store = () => import('@/views/Store.vue')
+const Community = () => import('@/views/Community.vue')
+const ProductList = () => import('@/views/ProductList.vue')
+const ProductDetail = () => import('@/views/ProductDetail.vue')
+const Cart = () => import('@/views/Cart.vue')
+const SearchResults = () => import('@/views/SearchResults.vue')
 
 const routes = [
   { 
@@ -131,8 +132,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, from, next) => {
-  console.log('路由守卫触发:', { to: to.path, from: from.path })
+router.beforeEach(to => {
   const userStore = useUserStore()
   
   // 检查登录状态
@@ -140,36 +140,28 @@ router.beforeEach(async (to, from, next) => {
   const isMerchant = userStore.isMerchant
   const token = userStore.token
 
-  console.log('登录状态检查:', { isLoggedIn, isMerchant, token })
-
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
-    console.log('需要认证的页面:', to.path)
     if (!isLoggedIn || !token) {
-      console.log('未登录，重定向到登录页')
-      next({
+      return {
         path: '/login',
         query: { redirect: to.fullPath }
-      })
-      return
+      }
     }
 
     // 检查是否需要商家权限
     if (to.meta.requiresMerchant && !isMerchant) {
-      console.log('需要商家权限但未授权，重定向到登录页')
-      next({
+      return {
         path: '/login',
         query: { 
           redirect: to.fullPath,
           message: '需要商家权限'
         }
-      })
-      return
+      }
     }
   }
 
-  console.log('允许访问:', to.path)
-  next()
+  return true
 })
 
 export default router

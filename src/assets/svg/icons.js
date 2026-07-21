@@ -112,12 +112,19 @@ export function svgToDataUri(svg) {
 // 辅助函数：创建图标HTML元素
 export function createIcon(name, size = 24, color = 'currentColor') {
   if (!icons[name]) return '';
+
+  const escapeAttribute = value => String(value).replace(
+    /[&<>"']/g,
+    character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]
+  );
+  const safeSize = escapeAttribute(size);
+  const safeColor = escapeAttribute(color);
   
   const svg = icons[name]
-    .replace('stroke="currentColor"', `stroke="${color}"`)
-    .replace('viewBox', `width="${size}" height="${size}" viewBox`);
+    .replace('stroke="currentColor"', `stroke="${safeColor}"`)
+    .replace('viewBox', `width="${safeSize}" height="${safeSize}" viewBox`);
     
   return svg;
 }
 
-export default icons; 
+export default icons;

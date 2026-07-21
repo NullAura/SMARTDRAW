@@ -1,44 +1,66 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 
-// 加载环境变量
-dotenv.config();
+function createCorsOptions(allowedOrigins) {
+  return {
+    credentials: true,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      const error = new Error('CORS_ORIGIN_DENIED');
+      error.status = 403;
+      return callback(error);
+    }
+  };
+}
 
-const app = express();
+function createApp({ allowedOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173'] } = {}) {
+  const app = express();
+  app.disable('x-powered-by');
+  app.set('query parser', 'simple');
 
-// CORS 配置
-app.use(cors({
-  origin: true, // 允许所有来源
-  credentials: true
-}));
+  app.use(helmet());
+  app.use(cors(createCorsOptions(allowedOrigins)));
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
-// 中间件
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// 数据库连接
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartdraw')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// 路由
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/works', require('./routes/works'));
-app.use('/api/merchant', require('./routes/merchant'));
-
-// 错误处理中间件
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    success: false,
-    message: '服务器内部错误：' + err.message 
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { success: false, message: '请求过于频繁，请稍后再试' }
   });
-});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
-}); 
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'healthy' });
+  });
+
+  app.use('/api/auth', authLimiter, require('./routes/auth'));
+  app.use('/api/users', require('./routes/users'));
+  app.use('/api/works', require('./routes/works'));
+  app.use('/api/reviews', require('./routes/reviews'));
+  app.use('/api/merchant', authLimiter, require('./routes/merchant'));
+
+  app.use((_req, res) => {
+    res.status(404).json({ success: false, message: '接口不存在' });
+  });
+
+  app.use((err, _req, res, _next) => {
+    const status = Number.isInteger(err.status) ? err.status : 500;
+    if (status >= 500) {
+      console.error(err);
+    }
+    res.status(status).json({
+      success: false,
+      message: status === 403 ? '来源不在允许列表中' : '服务器内部错误'
+    });
+  });
+
+  return app;
+}
+
+module.exports = { createApp, createCorsOptions };

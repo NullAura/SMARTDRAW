@@ -2,13 +2,13 @@
   <div class="tool-form">
     <el-form :model="form" label-width="100px">
       <el-form-item label="关键词">
-        <el-input 
-          v-model="form.keyword" 
-          placeholder="输入要分析的关键词" 
+        <el-input
+          v-model="form.keyword"
+          placeholder="输入要分析的关键词"
           clearable
         />
       </el-form-item>
-      
+
       <el-form-item label="分析类型">
         <el-select v-model="form.analysisType" placeholder="选择分析类型" style="width: 180px;">
           <el-option label="热度趋势" value="trend" />
@@ -17,7 +17,7 @@
           <el-option label="地域分布" value="geographic" />
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="时间范围">
         <el-date-picker
           v-model="form.dateRange"
@@ -29,7 +29,7 @@
           style="width: 300px;"
         />
       </el-form-item>
-      
+
       <el-form-item>
         <el-button type="primary" @click="handleAnalyze" :loading="loading">
           开始分析
@@ -41,9 +41,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, defineProps, defineEmits } from 'vue'
+import { reactive, defineProps, defineEmits } from 'vue'
 
-const props = defineProps({
+defineProps({
   loading: {
     type: Boolean,
     default: false
@@ -112,4 +112,4 @@ const handleReset = () => {
     width: 100%;
   }
 }
-</style> 
+</style>

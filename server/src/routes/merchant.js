@@ -1,177 +1,97 @@
 const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { auth } = require('../middleware/auth');
 const axios = require('axios');
+const mongoose = require('mongoose');
+const User = require('../models/User');
+const AIGeneration = require('../models/AIGeneration');
+const { auth, isMerchant, requireRole } = require('../middleware/auth');
+const { signToken } = require('../utils/token');
+const { getOpenAIConfig } = require('../config');
+const { normalizeString, validateCredentials } = require('../utils/validation');
 
-// 商家登录
-router.post('/login', async (req, res) => {
-  console.log('收到商家登录请求:', {
-    body: {
-      ...req.body,
-      password: '******' // 不输出实际密码
-    }
-  });
-  
+const router = express.Router();
+const TEMPLATE_NAMES = {
+  clothing: '服装行业',
+  digital: '数码产品',
+  food: '食品',
+  beauty: '美妆产品'
+};
+const GENERATION_TYPES = new Set(['description', 'image', 'tag']);
+
+function publicMerchant(user) {
+  return {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    storeName: user.storeName,
+    role: user.role,
+    status: user.status
+  };
+}
+
+function buildPrompt(type, template, currentItems = []) {
+  const industry = TEMPLATE_NAMES[template] || '通用商品';
+  const existingContext = JSON.stringify(currentItems).slice(0, 4000);
+  const requests = {
+    description: '一段真实、清晰且有吸引力的商品描述，突出特点和使用场景',
+    image: '一段可直接用于生成高质量商品主图的视觉提示词，包含构图、光线和背景',
+    tag: '5 个简洁、准确、不夸大的营销标签'
+  };
+  return `请为${industry}生成${requests[type]}。现有页面内容：${existingContext}`;
+}
+
+router.post('/login', async (req, res, next) => {
   try {
-    const { account, password } = req.body;
-    
+    const account = normalizeString(req.body?.account);
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
     if (!account || !password) {
-      console.log('缺少必要参数');
-      return res.status(400).json({ 
-        success: false,
-        message: '请提供账号和密码' 
-      });
+      return res.status(400).json({ success: false, message: '请提供账号和密码' });
     }
 
-    // 查找商家用户（支持邮箱或用户名登录）
     const user = await User.findOne({
-      $or: [
-        { email: account },
-        { username: account }
-      ],
+      $or: [{ email: account.toLowerCase() }, { username: account }],
       role: 'merchant'
-    });
-
-    if (!user) {
-      console.log('商家账号不存在:', account);
-      return res.status(401).json({ 
-        success: false,
-        message: '账号或密码错误' 
-      });
+    }).select('+password');
+    const passwordMatches = user ? await user.comparePassword(password) : false;
+    if (!passwordMatches) {
+      return res.status(401).json({ success: false, message: '账号或密码错误' });
+    }
+    if (user.status !== 'approved') {
+      const message = user.status === 'rejected' ? '商家账号审核未通过' : '商家账号正在审核中';
+      return res.status(403).json({ success: false, message });
     }
 
-    console.log('找到商家用户:', {
-      id: user._id,
-      email: user.email,
-      username: user.username
-    });
-
-    // 验证密码
-    console.log('开始验证密码');
-    const isMatch = await user.comparePassword(password);
-    console.log('密码验证结果:', isMatch);
-
-    if (!isMatch) {
-      console.log('密码验证失败');
-      return res.status(401).json({ 
-        success: false,
-        message: '账号或密码错误' 
-      });
-    }
-
-    // 生成 token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    console.log('商家登录成功，生成token');
-    res.json({
+    return res.json({
       success: true,
-      message: '登录成功！',
-      data: {
-        token,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          storeName: user.storeName,
-          role: user.role
-        }
-      }
+      message: '登录成功',
+      data: { token: signToken(user._id), user: publicMerchant(user) }
     });
   } catch (error) {
-    console.error('商家登录错误:', error);
-    res.status(400).json({ 
-      success: false,
-      message: '登录失败：' + error.message 
-    });
+    return next(error);
   }
 });
 
-// 商家登出
-router.post('/logout', auth, async (req, res) => {
+router.post('/register', async (req, res, next) => {
   try {
-    // 在这里可以添加token黑名单或其他服务器端登出逻辑
-    console.log('商家登出成功:', req.user.userId);
-    
-    res.json({
-      success: true,
-      message: '登出成功'
-    });
-  } catch (error) {
-    console.error('商家登出错误:', error);
-    res.status(500).json({
-      success: false,
-      message: '登出失败：' + error.message
-    });
-  }
-});
-
-// 商家注册
-router.post('/register', async (req, res) => {
-  console.log('收到商家注册请求:', {
-    body: {
-      ...req.body,
-      password: '******' // 不输出实际密码
-    },
-    headers: req.headers,
-    ip: req.ip,
-    method: req.method,
-    path: req.path
-  });
-
-  try {
-    const { storeName, username, email, phone, password, address, businessLicense } = req.body;
-
-    // 输入验证
-    if (!storeName || !username || !email || !phone || !password || !address || !businessLicense) {
-      console.log('缺少必要参数:', { 
-        storeName: !!storeName, 
-        username: !!username, 
-        email: !!email, 
-        phone: !!phone, 
-        password: !!password, 
-        address: !!address, 
-        businessLicense: !!businessLicense 
-      });
-      return res.status(400).json({
-        success: false,
-        message: '请提供完整的注册信息'
-      });
+    const validation = validateCredentials(req.body || {});
+    if (validation.error) {
+      return res.status(400).json({ success: false, message: validation.error });
     }
 
-    // 检查用户名是否已存在
-    const existingUser = await User.findOne({ username });
+    const storeName = normalizeString(req.body.storeName);
+    const phone = normalizeString(req.body.phone);
+    const address = normalizeString(req.body.address);
+    const businessLicense = normalizeString(req.body.businessLicense);
+    if (!storeName || !/^1[3-9]\d{9}$/.test(phone) || !address || !businessLicense) {
+      return res.status(400).json({ success: false, message: '请提供完整、有效的商家资料' });
+    }
+
+    const { username, email, password } = validation.value;
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      console.log('用户名已存在:', {
-        id: existingUser._id,
-        username: existingUser.username
-      });
-      return res.status(400).json({
-        success: false,
-        message: '该用户名已被使用'
-      });
+      return res.status(409).json({ success: false, message: '用户名或邮箱已被使用' });
     }
 
-    // 检查邮箱是否已存在
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      console.log('邮箱已存在:', {
-        id: existingEmail._id,
-        email: existingEmail.email
-      });
-      return res.status(400).json({
-        success: false,
-        message: '该邮箱已被注册'
-      });
-    }
-
-    // 创建新商家用户
-    const merchant = new User({
+    const merchant = await User.create({
       username,
       email,
       password,
@@ -182,237 +102,131 @@ router.post('/register', async (req, res) => {
       businessLicense
     });
 
-    console.log('正在创建新商家用户:', {
-      username: merchant.username,
-      email: merchant.email,
-      storeName: merchant.storeName
-    });
-
-    await merchant.save();
-    console.log('商家用户创建成功:', {
-      id: merchant._id,
-      username: merchant.username,
-      email: merchant.email
-    });
-
-    // 生成 token
-    const token = jwt.sign(
-      { userId: merchant._id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    console.log('注册成功，返回商家信息');
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: '商家注册成功，请等待审核',
-      data: {
-        token,
-        user: {
-          id: merchant._id,
-          username: merchant.username,
-          email: merchant.email,
-          storeName: merchant.storeName
-        }
-      }
+      message: '商家入驻申请已提交，请等待审核',
+      data: { user: publicMerchant(merchant) }
     });
   } catch (error) {
-    console.error('商家注册错误:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      code: error.code
-    });
-
-    // MongoDB 特定错误处理
     if (error.code === 11000) {
-      console.error('MongoDB 唯一索引冲突:', error.keyPattern);
-      return res.status(400).json({
-        success: false,
-        message: '该用户名或邮箱已被使用'
-      });
+      return res.status(409).json({ success: false, message: '用户名或邮箱已被使用' });
     }
-
-    res.status(500).json({
-      success: false,
-      message: '注册失败：' + error.message
-    });
+    return next(error);
   }
 });
 
-// AI工具相关路由
-router.post('/ai/generate', auth, async (req, res) => {
-  console.log('收到AI生成请求:', {
-    body: req.body,
-    headers: req.headers,
-    ip: req.ip,
-    method: req.method,
-    path: req.path
-  });
+router.get('/me', auth, isMerchant, (req, res) => {
+  return res.json({ success: true, data: publicMerchant(req.user) });
+});
+
+router.post('/logout', auth, isMerchant, (_req, res) => {
+  return res.json({ success: true, message: '登出成功' });
+});
+
+router.patch('/:id/status', auth, requireRole('admin'), async (req, res, next) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+    return res.status(400).json({ success: false, message: '商家 ID 格式无效' });
+  }
+  if (!['approved', 'rejected'].includes(req.body?.status)) {
+    return res.status(400).json({ success: false, message: '审核状态无效' });
+  }
+  try {
+    const merchant = await User.findOneAndUpdate(
+      { _id: req.params.id, role: 'merchant' },
+      { status: req.body.status },
+      { new: true, runValidators: true }
+    );
+    if (!merchant) return res.status(404).json({ success: false, message: '商家不存在' });
+    return res.json({ success: true, data: publicMerchant(merchant) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/ai/generate', auth, isMerchant, async (req, res) => {
+  const { type, template, currentItems = [] } = req.body || {};
+  if (!GENERATION_TYPES.has(type) || !Object.hasOwn(TEMPLATE_NAMES, template)) {
+    return res.status(400).json({ success: false, message: '生成类型或模板无效' });
+  }
+  if (!Array.isArray(currentItems) || currentItems.length > 100) {
+    return res.status(400).json({ success: false, message: '页面内容格式无效' });
+  }
+
+  let aiConfig;
+  try {
+    aiConfig = getOpenAIConfig();
+  } catch {
+    return res.status(503).json({ success: false, message: 'AI 服务尚未配置' });
+  }
 
   try {
-    const { type, template, currentItems } = req.body;
-
-    if (!type || !template) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少必要参数'
-      });
-    }
-
-    // 构建提示词
-    const prompt = buildPrompt(type, template, currentItems);
-
-    // 调用OpenAI API
-    const response = await axios.post(
-      `${process.env.OPENAI_API_BASE_URL}/chat/completions`,
+    const completion = await axios.post(
+      `${aiConfig.baseUrl}/chat/completions`,
       {
-        model: 'gpt-4-vision-preview',
+        model: aiConfig.textModel,
         messages: [
           {
             role: 'system',
-            content: '你是一个专业的商品详情页设计师，擅长根据行业特点生成吸引人的商品描述和图片。'
+            content: '你是严谨的电商页面设计助手。内容必须准确、简洁，不得虚构认证或效果。'
           },
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'user', content: buildPrompt(type, template, currentItems) }
         ],
-        max_tokens: 1000
+        max_completion_tokens: 1000
       },
       {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { Authorization: `Bearer ${aiConfig.apiKey}` },
         timeout: 30000
       }
     );
+    const content = completion.data?.choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error('INVALID_UPSTREAM_RESPONSE');
 
-    const content = response.data.choices[0].message.content;
-
-    if (type === 'description') {
-      return res.json({
-        success: true,
-        data: {
-          content
-        }
-      });
-    } else if (type === 'image') {
-      // 调用图片生成API
-      const imageResponse = await axios.post(
-        `${process.env.OPENAI_API_BASE_URL}/images/generations`,
-        {
-          prompt: content,
-          n: 1,
-          size: '1024x1024'
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000
-        }
-      );
-
-      return res.json({
-        success: true,
-        data: {
-          imageUrl: imageResponse.data.data[0].url
-        }
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: '不支持的生成类型'
-      });
-    }
-  } catch (error) {
-    console.error('AI生成错误:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-
-    if (error.response) {
-      return res.status(error.response.status).json({
-        success: false,
-        message: `AI服务错误: ${error.response.data.error?.message || error.message}`
-      });
+    if (type !== 'image') {
+      return res.json({ success: true, data: { content } });
     }
 
-    res.status(500).json({
-      success: false,
-      message: '生成失败：' + error.message
-    });
-  }
-});
-
-// 保存AI作品
-router.post('/ai/save', auth, async (req, res) => {
-  try {
-    const { template, items } = req.body;
-    const userId = req.user.userId;
-
-    // 这里可以添加保存到数据库的逻辑
-    // 例如：await AITemplate.save({ userId, template, items });
-
-    res.json({
-      success: true,
-      message: '保存成功'
-    });
-  } catch (error) {
-    console.error('保存AI作品错误:', error);
-    res.status(500).json({
-      success: false,
-      message: '保存失败：' + error.message
-    });
-  }
-});
-
-// 获取AI作品列表
-router.get('/ai/works', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    // 这里可以添加从数据库获取作品的逻辑
-    // 例如：const works = await AITemplate.find({ userId });
-
-    res.json({
-      success: true,
-      data: {
-        works: [] // 替换为实际的作品列表
+    const imageResponse = await axios.post(
+      `${aiConfig.baseUrl}/images/generations`,
+      { model: aiConfig.imageModel, prompt: content, n: 1, size: '1024x1024' },
+      {
+        headers: { Authorization: `Bearer ${aiConfig.apiKey}` },
+        timeout: 60000
       }
-    });
+    );
+    const image = imageResponse.data?.data?.[0];
+    const imageUrl = image?.url || (image?.b64_json ? `data:image/png;base64,${image.b64_json}` : '');
+    if (!imageUrl) throw new Error('INVALID_IMAGE_RESPONSE');
+    return res.json({ success: true, data: { content, imageUrl } });
   } catch (error) {
-    console.error('获取AI作品列表错误:', error);
-    res.status(500).json({
+    const status = error.response?.status === 429 ? 429 : 502;
+    return res.status(status).json({
       success: false,
-      message: '获取失败：' + error.message
+      message: status === 429 ? 'AI 请求过于频繁，请稍后再试' : 'AI 服务暂时不可用'
     });
   }
 });
 
-function buildPrompt(type, template, currentItems) {
-  const templatePrompts = {
-    'clothing': '服装行业',
-    'digital': '数码产品',
-    'food': '食品',
-    'beauty': '美妆产品'
-  };
-
-  const basePrompt = `请为${templatePrompts.get(template, '商品')}生成`;
-
-  if (type === 'description') {
-    return `${basePrompt}一段吸引人的商品描述，突出产品特点和优势。`;
-  } else if (type === 'image') {
-    return `${basePrompt}一张高质量的商品主图，要求突出产品特点，构图精美。`;
-  } else if (type === 'tag') {
-    return `${basePrompt}一组吸引人的营销标签，突出产品卖点。`;
+router.post('/ai/save', auth, isMerchant, async (req, res, next) => {
+  try {
+    const { template, items } = req.body || {};
+    if (!Object.hasOwn(TEMPLATE_NAMES, template) || !Array.isArray(items) || items.length > 100) {
+      return res.status(400).json({ success: false, message: '作品数据格式无效' });
+    }
+    const generation = await AIGeneration.create({ user: req.user._id, template, items });
+    return res.status(201).json({ success: true, message: '保存成功', data: generation });
+  } catch (error) {
+    return next(error);
   }
+});
 
-  return basePrompt;
-}
+router.get('/ai/works', auth, isMerchant, async (req, res, next) => {
+  try {
+    const works = await AIGeneration.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(100);
+    return res.json({ success: true, data: { works } });
+  } catch (error) {
+    return next(error);
+  }
+});
 
-module.exports = router; 
+module.exports = router;
+module.exports.buildPrompt = buildPrompt;

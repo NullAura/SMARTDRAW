@@ -1,21 +1,21 @@
 <template>
   <div class="keyword-analysis-container">
     <h1 class="page-title">热点关键词分析</h1>
-    
+
     <el-card class="tool-card">
       <template #header>
         <div class="card-header">
           <span>关键词分析工具</span>
         </div>
       </template>
-      
-      <keyword-form 
-        :loading="loading" 
-        @analyze="handleAnalyzeKeyword" 
+
+      <keyword-form
+        :loading="loading"
+        @analyze="handleAnalyzeKeyword"
         @reset="handleResetForm"
       />
     </el-card>
-    
+
     <div v-if="showResults" class="results-section">
       <!-- 热度趋势图 -->
       <el-card class="result-card" v-if="analysisType === 'trend'">
@@ -29,7 +29,7 @@
         </template>
         <trend-chart :keyword="keyword" :loading="loading" />
       </el-card>
-      
+
       <!-- 相关话题分析 -->
       <el-card class="result-card" v-if="analysisType === 'related'">
         <template #header>
@@ -43,7 +43,7 @@
         <related-topics-chart :keyword="keyword" :loading="loading" />
         <word-cloud-chart :keyword="keyword" :loading="loading" />
       </el-card>
-      
+
       <!-- 人群分析 -->
       <el-card class="result-card" v-if="analysisType === 'demographic'">
         <template #header>
@@ -56,7 +56,7 @@
         </template>
         <demographic-charts :keyword="keyword" :loading="loading" />
       </el-card>
-      
+
       <!-- 地域分布 -->
       <el-card class="result-card" v-if="analysisType === 'geographic'">
         <template #header>
@@ -69,7 +69,7 @@
         </template>
         <geographic-map :keyword="keyword" :loading="loading" />
       </el-card>
-      
+
       <!-- 建议和洞察 -->
       <el-card class="insight-card">
         <template #header>
@@ -77,7 +77,7 @@
             <span>分析洞察</span>
           </div>
         </template>
-        <insights-panel 
+        <insights-panel
           :keyword="keyword"
           :findings="insights.findings"
           :marketing-tips="insights.marketingTips"
@@ -115,7 +115,7 @@ const insights = reactive({
 })
 
 // 内联实现fetchAnalysisData函数
-const fetchAnalysisData = async (keyword, analysisType) => {
+const fetchAnalysisData = async (keyword, _analysisType) => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const result = {
@@ -157,7 +157,7 @@ const fetchAnalysisData = async (keyword, analysisType) => {
           trendAnalysis: `根据数据分析，"${keyword}"相关的家居产品市场正处于快速增长期，与去年同期相比增长了35%。消费者对高品质、设计感强的产品需求明显，价格因素影响较小。建议在产品设计和营销中强调环保材质、收纳功能和极简风格等要素，以满足目标人群需求。`
         }
       }
-      
+
       resolve(result)
     }, 1500)
   })
@@ -169,10 +169,10 @@ const handleAnalyzeKeyword = async (formData) => {
     ElMessage.warning('请输入要分析的关键词')
     return
   }
-  
+
   keyword.value = formData.keyword
   analysisType.value = formData.analysisType
-  
+
   loading.value = true
   try {
     // 调用API获取数据
@@ -182,7 +182,7 @@ const handleAnalyzeKeyword = async (formData) => {
       insights.findings = result.data.findings
       insights.marketingTips = result.data.marketingTips
       insights.trendAnalysis = result.data.trendAnalysis
-      
+
       showResults.value = true
       ElMessage.success('分析完成')
     }
@@ -208,27 +208,27 @@ const exportData = () => {
 <style lang="scss" scoped>
 .keyword-analysis-container {
   padding: 20px;
-  
+
   .page-title {
     margin-bottom: 20px;
     color: #333;
     font-weight: 600;
   }
-  
+
   .tool-card {
     margin-bottom: 20px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
   }
-  
+
   .results-section {
     .result-card {
       margin-bottom: 20px;
-      
+
       .card-header {
         display: flex;
         justify-content: space-between;
@@ -237,4 +237,4 @@ const exportData = () => {
     }
   }
 }
-</style> 
+</style>

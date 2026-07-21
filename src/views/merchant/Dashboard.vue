@@ -120,9 +120,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { 
+import {
   DataLine,
   Goods,
   ChatLineRound,
@@ -316,4 +315,4 @@ const handleDataAnalysis = () => {
     }
   }
 }
-</style> 
+</style>
