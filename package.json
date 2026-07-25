@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "dev": "vite",
@@ -12,8 +12,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "npm run lint && npm run build && npm --prefix server test",
-    "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'",
-    "test:image-service": "node test_generate.js",
+    "test:python": ".venv/bin/python -m unittest discover -s services/ai_gateway/tests -p 'test_*.py'",
+    "test:image-service": "node tests/integration/image-service.test.js",
     "security:secrets": "gitleaks dir . --redact=100 --no-banner"
   },
   "dependencies": {
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
-    "eslint": "^9.39.2",
+    "eslint": "^10.8.0",
     "eslint-plugin-vue": "^10.10.0",
     "globals": "^16.5.0",
     "prettier": "^3.9.6",

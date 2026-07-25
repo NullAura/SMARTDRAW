@@ -1,7 +1,7 @@
 import axios from 'axios'
-import toast from './toast'
-import router from '../router'
-import { API_BASE_URL } from '../config'
+import toast from '@/utils/toast'
+import router from '@/router'
+import { API_BASE_URL } from '@/config'
 
 function clearAuthState() {
   for (const key of ['token', 'isLoggedIn', 'userInfo', 'isMerchant']) {

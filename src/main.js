@@ -33,11 +33,8 @@ import {
 // 导入Vant组件样式
 import 'vant/lib/index.css'
 
-// 导入SVG图标库
-import { icons, createIcon } from './assets/svg/icons.js'
-
 // 导入全局组件
-import LoadingSpinner from './components/LoadingSpinner.vue'
+import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import Skeleton from './components/ui/Skeleton.vue'
 
 // 导入全局服务
@@ -87,10 +84,7 @@ for (const [key, component] of Object.entries(elementIcons)) {
   app.component(key, component)
 }
 
-// 全局属性
 app.config.globalProperties.$toast = toast
-app.config.globalProperties.$icons = icons
-app.config.globalProperties.$createIcon = createIcon
 
 // 先使用 pinia，再使用其他插件
 app.use(pinia)

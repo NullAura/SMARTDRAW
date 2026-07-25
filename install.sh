@@ -16,8 +16,8 @@ require_command npm
 require_command python3
 require_command openssl
 
-node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 20) process.exit(1)" || {
-  echo "需要 Node.js 20 或更高版本" >&2
+node -e "const [major, minor] = process.versions.node.split('.').map(Number); if (major < 20 || (major === 20 && minor < 19)) process.exit(1)" || {
+  echo "需要 Node.js 20.19 或更高版本" >&2
   exit 1
 }
 
@@ -30,7 +30,8 @@ npm --prefix server ci
 echo "[3/4] 创建 Python 虚拟环境并安装依赖"
 python3 -m venv .venv
 "$PROJECT_DIR/.venv/bin/python" -m pip install --upgrade pip
-"$PROJECT_DIR/.venv/bin/python" -m pip install --requirement requirements.txt
+"$PROJECT_DIR/.venv/bin/python" -m pip install \
+  --requirement services/ai_gateway/requirements.txt
 
 echo "[4/4] 准备本地环境配置"
 if [[ ! -f .env ]]; then

@@ -1,14 +1,8 @@
-import importlib.util
 import io
 import unittest
-from pathlib import Path
 from unittest.mock import Mock, patch
 
-
-MODULE_PATH = Path(__file__).resolve().parents[1] / "server.py"
-SPEC = importlib.util.spec_from_file_location("smartdraw_ai_gateway", MODULE_PATH)
-gateway = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(gateway)
+from services.ai_gateway import app as gateway
 
 
 class AIGatewayTests(unittest.TestCase):

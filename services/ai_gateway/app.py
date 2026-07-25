@@ -19,7 +19,7 @@ from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 from waitress import serve
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / "server" / ".env")
 
 logging.basicConfig(

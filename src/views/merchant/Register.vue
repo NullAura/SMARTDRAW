@@ -142,7 +142,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
-import { API_BASE_URL, buildUrl } from '@/config'
+import { registerMerchant } from '@/api/auth'
 
 export default {
   name: 'MerchantRegister',
@@ -264,33 +264,24 @@ export default {
 
       this.loading = true
       try {
-        const response = await fetch(buildUrl(API_BASE_URL, '/api/merchant/register'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            storeName: this.formData.storeName,
-            username: this.formData.username,
-            email: this.formData.email,
-            phone: this.formData.phone,
-            password: this.formData.password,
-            address: this.formData.address,
-            businessLicense: this.formData.businessLicense
-          })
+        const data = await registerMerchant({
+          storeName: this.formData.storeName,
+          username: this.formData.username,
+          email: this.formData.email,
+          phone: this.formData.phone,
+          password: this.formData.password,
+          address: this.formData.address,
+          businessLicense: this.formData.businessLicense
         })
 
-        const data = await response.json()
-
-        if (response.ok && data.success) {
+        if (data.success) {
           ElMessage.success('商家入驻申请已提交，请等待审核')
           this.$router.push('/login')
         } else {
           ElMessage.error(data.message || '注册失败')
         }
       } catch (error) {
-        console.error('注册错误:', error)
-        ElMessage.error('注册失败：' + error.message)
+        ElMessage.error(error.response?.data?.message || '注册失败，请稍后重试')
       } finally {
         this.loading = false
       }

@@ -74,7 +74,7 @@
 
 <script>
 import { ElMessage } from 'element-plus'
-import { API_BASE_URL, buildUrl } from '@/config'
+import { registerUser } from '@/api/auth'
 
 export default {
   name: 'Register',
@@ -150,33 +150,20 @@ export default {
 
       this.loading = true
       try {
-        const response = await fetch(buildUrl(API_BASE_URL, '/api/auth/register'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            username: this.formData.username,
-            email: this.formData.email,
-            password: this.formData.password
-          })
+        const data = await registerUser({
+          username: this.formData.username,
+          email: this.formData.email,
+          password: this.formData.password
         })
 
-        const data = await response.json()
-
-        if (response.ok && data.success) {
+        if (data.success) {
           ElMessage.success(data.message)
           this.$router.push('/login')
         } else {
           ElMessage.error(data.message || '注册失败')
         }
       } catch (error) {
-        if (error.message.includes('Failed to fetch')) {
-          ElMessage.error('无法连接到服务器，请检查网络连接')
-        } else {
-          ElMessage.error('注册失败：' + error.message)
-        }
+        ElMessage.error(error.response?.data?.message || '注册失败，请稍后重试')
       } finally {
         this.loading = false
       }

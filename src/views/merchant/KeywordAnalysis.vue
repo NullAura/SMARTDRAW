@@ -93,13 +93,13 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 
 // 导入组件
-import KeywordForm from '@/components/analysis/KeywordForm.vue'
-import TrendChart from '@/components/analysis/TrendChart.vue'
-import RelatedTopicsChart from '@/components/analysis/RelatedTopicsChart.vue'
-import WordCloudChart from '@/components/analysis/WordCloudChart.vue'
-import DemographicCharts from '@/components/analysis/DemographicCharts.vue'
-import GeographicMap from '@/components/analysis/GeographicMap.vue'
-import InsightsPanel from '@/components/analysis/InsightsPanel.vue'
+import KeywordForm from '@/features/analysis/components/KeywordForm.vue'
+import TrendChart from '@/features/analysis/components/TrendChart.vue'
+import RelatedTopicsChart from '@/features/analysis/components/RelatedTopicsChart.vue'
+import WordCloudChart from '@/features/analysis/components/WordCloudChart.vue'
+import DemographicCharts from '@/features/analysis/components/DemographicCharts.vue'
+import GeographicMap from '@/features/analysis/components/GeographicMap.vue'
+import InsightsPanel from '@/features/analysis/components/InsightsPanel.vue'
 
 // 状态
 const loading = ref(false)

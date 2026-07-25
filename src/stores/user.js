@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { get, patch, post } from '@/utils/request'
+import { get, patch, post } from '@/api/client'
 
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 

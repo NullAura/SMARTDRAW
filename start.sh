@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_DIR="$PROJECT_DIR/logs"
+cd "$PROJECT_DIR"
 mkdir -p "$LOG_DIR"
 
 if [[ ! -f "$PROJECT_DIR/server/.env" ]]; then
@@ -29,7 +30,7 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 start_service backend npm --prefix "$PROJECT_DIR/server" run dev
-start_service ai "$PROJECT_DIR/.venv/bin/python" "$PROJECT_DIR/server.py"
+start_service ai "$PROJECT_DIR/.venv/bin/python" -m services.ai_gateway.app
 start_service frontend npm --prefix "$PROJECT_DIR" run dev
 
 echo "前端：http://127.0.0.1:5173"

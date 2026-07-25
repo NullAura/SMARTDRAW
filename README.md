@@ -11,9 +11,19 @@ SMARTDRAW 是一个面向家居设计与电商运营场景的全栈项目，包�
 | AI 网关 | Python、Flask、Waitress | 8000 |
 | 图片服务 | 独立 HTTP 服务 | 9000 |
 
+## 目录结构
+
+| 目录 | 职责 |
+| --- | --- |
+| `src/` | Web 前端、领域组件和 API 客户端 |
+| `server/` | Node.js 业务 API |
+| `services/ai_gateway/` | Python AI 网关及其测试 |
+| `tests/integration/` | 外部服务集成测试 |
+| `docs/` | 项目文档 |
+
 ## 环境要求
 
-- Node.js 20+
+- Node.js 20.19+
 - Python 3.10+
 - MongoDB 6+
 
@@ -59,7 +69,7 @@ cd SMARTDRAW
 npm ci
 npm --prefix server ci
 npm test
-python3 -m unittest discover -s tests -p 'test_*.py'
+npm run test:python
 npm audit --audit-level=high
 npm --prefix server audit --audit-level=high
 gitleaks dir . --redact=100 --no-banner

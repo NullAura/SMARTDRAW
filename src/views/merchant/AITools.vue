@@ -167,10 +167,10 @@
 </template>
 
 <script>
-import TextComponent from '@/components/ai/TextComponent.vue'
-import ImageComponent from '@/components/ai/ImageComponent.vue'
-import PriceComponent from '@/components/ai/PriceComponent.vue'
-import { post } from '@/utils/request'
+import TextComponent from '@/features/merchant-ai/components/TextComponent.vue'
+import ImageComponent from '@/features/merchant-ai/components/ImageComponent.vue'
+import PriceComponent from '@/features/merchant-ai/components/PriceComponent.vue'
+import { post } from '@/api/client'
 
 export default {
   name: 'AITools',
